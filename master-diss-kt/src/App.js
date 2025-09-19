@@ -7,6 +7,7 @@ import Home from "./pages/Home";
 import Students from "./pages/Students";
 import Parents from "./pages/Parents";
 import Educators from "./pages/Educators";
+import Policy from "./pages/Policy";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
             <Route path="/students" element={<Students />} />
             <Route path="/parents" element={<Parents />} />
             <Route path="/educators" element={<Educators />} />
+            <Route path="/policy" element={<Policy />} />
           </Routes>
         </main>
         <Footer />
