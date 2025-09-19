@@ -11,6 +11,7 @@ function Navbar() {
         <Link to="/students">Students</Link>
         <Link to="/parents">Parents</Link>
         <Link to="/educators">Educators</Link>
+        <Link to="/policy">Policy</Link>
       </div>
     </nav>
   );

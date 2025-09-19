@@ -39,7 +39,10 @@ function Home() {
           For Parents
         </Link>
         <Link to="/educators" className="custom-btn">
-          For Educators/Policymakers
+          For Educators
+        </Link>
+        <Link to="/policy" className="custom-btn">
+          For Policymakers
         </Link>
       </div>
 
