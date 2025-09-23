@@ -1,5 +1,6 @@
 import React from "react";
 import policyImage from "../image/policy.png";
+import { BreachImpactFunnel } from "../components/ArticleD3Charts";
 
 function Policy() {
   return (
@@ -44,6 +45,15 @@ function Policy() {
         senior leaders worldwide fined, dismissed, or even jailed following
         breaches.
       </p>
+      <BreachImpactFunnel
+        title="Breach Impact Funnel"
+        data={[
+          { label: "All orgs", value: 100 },
+          { label: "Breached", value: 87 },
+          { label: ">£1M loss", value: 53 },
+          { label: "Leaders penalised", value: 51 },
+        ]}
+      />
       <p>
         Taken together, the evidence shows that education and workforce
         development are not optional extras. Investment in teaching, training,

@@ -1,381 +1,291 @@
-import React, { useEffect, useRef, useMemo } from "react";
+// src/components/ArticleD3Charts.jsx
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as d3 from "d3";
 
+
 const useResizeObserver = (ref) => {
-  const [bounds, setBounds] = React.useState();
+  const [width, setWidth] = useState(null);
   useEffect(() => {
     if (!ref.current) return;
     const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        const cr = entry.contentRect;
-        setBounds({ width: cr.width, height: cr.height });
+        setWidth(entry.contentRect.width);
       }
     });
     ro.observe(ref.current);
     return () => ro.disconnect();
   }, [ref]);
-  return bounds;
-};
-
-const ChartFrame = ({ title, subtitle, children, height = 420 }) => (
-  <section
-    className="chart-card"
-    style={{
-      position: "relative",
-      background: "var(--card, #fff)",
-      borderRadius: 16,
-      padding: 16,
-      boxShadow: "0 10px 30px rgba(24,33,95,.10)",
-      border: "1px solid rgba(111,124,232,.15)",
-      margin: "24px 0",
-    }}
-  >
-    <header style={{ marginBottom: 8 }}>
-      <h3 style={{ margin: 0, fontSize: 20 }}>{title}</h3>
-      {subtitle && (
-        <p style={{ margin: "6px 0 0", color: "#5a5f7a", fontSize: 13 }}>{subtitle}</p>
-      )}
-    </header>
-    <div style={{ position: "relative", height }}>{children}</div>
-  </section>
-);
-
-
-export const DiversityGroupedBars = () => {
-  const wrapperRef = useRef(null);
-  const svgRef = useRef(null);
-  const tooltipRef = useRef(null);
-  const bounds = useResizeObserver(wrapperRef);
-
-  const data = useMemo(
-    () => [
-      { group: "Female", "All UK workforce": 48, Digital: 30, "Senior cyber": 12, "Cyber (all)": 17 },
-      { group: "Ethnic minorities", "All UK workforce": 13, Digital: 18, "Senior cyber": 9, "Cyber (all)": 15 },
-      { group: "Disabled people", "All UK workforce": 17, Digital: 13, "Senior cyber": 4, "Cyber (all)": 6 },
-      { group: "Neurodivergent", "All UK workforce": 0, Digital: 0, "Senior cyber": 8, "Cyber (all)": 13 },
-    ],
-    []
-  );
-
-  useEffect(() => {
-    if (!bounds) return;
-    const { width, height } = bounds;
-    const margin = { top: 28, right: 16, bottom: 68, left: 54 }; 
-    const innerW = Math.max(240, width - margin.left - margin.right);
-    const innerH = Math.max(220, height - margin.top - margin.bottom);
-
-    const svg = d3
-      .select(svgRef.current)
-      .attr("viewBox", `0 0 ${width} ${height}`)
-      .attr("role", "img")
-      .attr("aria-label", "Diversity across workforce segments");
-
-    svg.selectAll("*").remove();
-    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-
-    const seriesKeys = ["All UK workforce", "Digital", "Senior cyber", "Cyber (all)"];
-
-    const x0 = d3.scaleBand().domain(data.map((d) => d.group)).rangeRound([0, innerW]).paddingInner(0.28);
-    const x1 = d3.scaleBand().domain(seriesKeys).rangeRound([0, x0.bandwidth()]).padding(0.18);
-    const y = d3
-      .scaleLinear()
-      .domain([0, d3.max(data, (d) => d3.max(seriesKeys, (k) => d[k])) || 50])
-      .nice()
-      .range([innerH, 0]);
-
-    const color = d3
-      .scaleOrdinal()
-      .domain(seriesKeys)
-      .range(["#6f7ce8", "#9a7be0", "#b18cf0", "#7b68b6"]);
-
-    const xAxis = d3.axisBottom(x0).tickPadding(10); // padding added
-    const yAxis = d3.axisLeft(y).ticks(6).tickFormat((t) => t + "%").tickPadding(8);
-
-    g.append("g").attr("transform", `translate(0,${innerH})`).attr("class", "x-axis").call(xAxis);
-    g.append("g").attr("class", "y-axis").call(yAxis);
-
-   
-    const groups = g
-      .selectAll("g.group")
-      .data(data)
-      .enter()
-      .append("g")
-      .attr("class", "group")
-      .attr("transform", (d) => `translate(${x0(d.group)},0)`);
-
-    groups
-      .selectAll("rect")
-      .data((d) => seriesKeys.map((key) => ({ key, value: d[key], group: d.group })))
-      .enter()
-      .append("rect")
-      .attr("x", (d) => x1(d.key))
-      .attr("y", (d) => y(d.value))
-      .attr("width", x1.bandwidth())
-      .attr("height", (d) => innerH - y(d.value))
-      .attr("rx", 6)
-      .attr("fill", (d) => color(d.key))
-      .on("mousemove", (event, d) => {
-        d3.select(tooltipRef.current)
-          .style("left", `${event.offsetX + 10}px`)
-          .style("top", `${event.offsetY - 10}px`)
-          .style("opacity", 1)
-          .html(`
-            <div class="tt-title">${d.group}</div>
-            <div class="tt-sub">${d.key}</div>
-            <div class="tt-value">${d.value}%</div>
-          `);
-      })
-      .on("mouseleave", () => d3.select(tooltipRef.current).style("opacity", 0));
-
-   
-    const legend = g.append("g").attr("transform", `translate(0, -18)`);
-    const leg = legend
-      .selectAll("g.leg")
-      .data(seriesKeys)
-      .enter()
-      .append("g")
-      .attr("class", "leg")
-      .attr("transform", (d, i) => `translate(${i * Math.min(200, innerW / seriesKeys.length + 30)}, -4)`);
-
-    leg.append("rect").attr("width", 12).attr("height", 12).attr("rx", 3).attr("fill", (d) => color(d));
-    leg.append("text").attr("x", 16).attr("y", 10).style("font-size", 12).text((d) => d);
-  }, [bounds, data]);
-
-  return (
-    <ChartFrame title="Representation across workforce segments" subtitle="Share of each group represented (percentage)">
-      <div ref={wrapperRef} style={{ position: "relative", width: "100%", height: "100%" }}>
-        <svg ref={svgRef} style={{ width: "100%", height: "100%" }} />
-        <div ref={tooltipRef} className="d3-tooltip" />
-      </div>
-    </ChartFrame>
-  );
+  return width;
 };
 
 
-export const ConfidenceGroupedBars = () => {
-  const wrapperRef = useRef(null);
+export function BreachImpactFunnel({
+  data = [
+    { label: "All orgs", value: 100 },
+    { label: "Breached", value: 87 },
+    { label: ">£1M loss", value: 53 },
+    { label: "Leaders penalised", value: 51 },
+  ],
+  height = 480,
+  margin = { top: 40, right: 24, bottom: 40, left: 24 },
+  title = "Breach Impact Funnel",
+  desc = "100% baseline → 87% breached → 53% with >£1M losses → 51% leaders penalised.",
+}) {
+  const wrapRef = useRef(null);
   const svgRef = useRef(null);
-  const tooltipRef = useRef(null);
-  const bounds = useResizeObserver(wrapperRef);
+  const [tooltip, setTooltip] = useState({ show: false, x: 0, y: 0, html: "" });
 
-  const data = useMemo(
-    () => [
-      { task: "Dealing with breaches", Businesses: 33, "Large business": 2, Charities: 34, "Public sector": 4 },
-      { task: "Configured firewalls", Businesses: 28, "Large business": 13, Charities: 29, "Public sector": 8 },
-      { task: "Detect/remove malware", Businesses: 23, "Large business": 2, Charities: 25, "Public sector": 5 },
-      { task: "Transferring personal data", Businesses: 29, "Large business": 13, Charities: 27, "Public sector": 15 },
-      { task: "Restricting software", Businesses: 22, "Large business": 4, Charities: 21, "Public sector": 4 },
-      { task: "Choosing secure settings", Businesses: 15, "Large business": 4, Charities: 16, "Public sector": 3 },
-      { task: "Automatic updates", Businesses: 13, "Large business": 4, Charities: 16, "Public sector": 3 },
-      { task: "Admin rights control", Businesses: 9, "Large business": 3, Charities: 10, "Public sector": 3 },
-      { task: "Creating backups", Businesses: 6, "Large business": 2, Charities: 8, "Public sector": 4 },
-      { task: "Accounts & auth", Businesses: 14, "Large business": 8, Charities: 17, "Public sector": 4 },
-    ],
-    []
+  // responsive width from parent
+  const outerW = useResizeObserver(wrapRef) || 720;
+  const width = outerW; // svg width matches container
+  const innerW = width - margin.left - margin.right;
+  const innerH = height - margin.top - margin.bottom;
+
+  // Ensure data is sanitized and clamped to [0,100] and non-increasing
+  const stages = useMemo(() => {
+    const clean = data.map((d, i) => ({
+      ...d,
+      value: Math.max(0, Math.min(100, +d.value || 0)),
+      idx: i,
+    }));
+    for (let i = 1; i < clean.length; i++) {
+      clean[i].value = Math.min(clean[i].value, clean[i - 1].value);
+    }
+    return clean;
+  }, [data]);
+
+  // Scales
+  const xScale = useMemo(
+    () => d3.scaleLinear().domain([0, 100]).range([0, innerW]),
+    [innerW]
+  );
+  const yScale = useMemo(
+    () =>
+      d3
+        .scalePoint()
+        .domain(d3.range(stages.length))
+        .range([0, innerH])
+        .padding(0.8),
+    [stages.length, innerH]
+  );
+
+  // Build trapezoid segments between consecutive stages
+  const segments = useMemo(() => {
+    const segs = [];
+    for (let i = 0; i < stages.length - 1; i++) {
+      const top = stages[i];
+      const bot = stages[i + 1];
+      const y1 = yScale(i);
+      const y2 = yScale(i + 1);
+      const cx = innerW / 2;
+      const w1 = xScale(top.value);
+      const w2 = xScale(bot.value);
+      const x1L = cx - w1 / 2;
+      const x1R = cx + w1 / 2;
+      const x2L = cx - w2 / 2;
+      const x2R = cx + w2 / 2;
+      const r = Math.min(12, Math.abs(w1 - w2) / 4); // rounded corners
+      const path = `M ${x1L} ${y1}
+        L ${x1R} ${y1}
+        C ${x1R} ${y1 + r} ${x2R} ${y2 - r} ${x2R} ${y2}
+        L ${x2L} ${y2}
+        C ${x2L} ${y2 - r} ${x1L} ${y1 + r} ${x1L} ${y1}
+        Z`;
+      segs.push({ i, y1, y2, path, top, bot, w1, w2, cx, x1L, x1R, x2L, x2R });
+    }
+    return segs;
+  }, [stages, xScale, yScale, innerW]);
+
+  // Color scale
+  const color = useMemo(
+    () =>
+      d3
+        .scaleLinear()
+        .domain([0, Math.max(1, segments.length - 1)])
+        .range(["#5AA9FF", "#FF6AD5"])
+        .interpolate(d3.interpolateHcl),
+    [segments.length]
   );
 
   useEffect(() => {
-    if (!bounds) return;
-    const { width, height } = bounds;
-    const margin = { top: 28, right: 20, bottom: 38, left: 210 }; 
-    const innerW = Math.max(300, width - margin.left - margin.right);
-    const innerH = Math.max(260, height - margin.top - margin.bottom);
+    const svg = d3.select(svgRef.current);
 
-    const svg = d3
-      .select(svgRef.current)
-      .attr("viewBox", `0 0 ${width} ${height}`)
-      .attr("role", "img")
-      .attr("aria-label", "% not confident in basic tasks by org type");
+    svg.attr("role", "img").attr("aria-label", title);
+    svg.select("rect.bg").attr("width", width).attr("height", height).attr("fill", "#0b0b12");
 
-    svg.selectAll("*").remove();
-    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+    const g = svg.select("g.inner").attr("transform", `translate(${margin.left},${margin.top})`);
 
-    const keys = ["Businesses", "Large business", "Charities", "Public sector"];
+    // Grid (horizontal reference lines)
+    const grid = g.select("g.grid");
+    const yTicks = stages.map((_, i) => yScale(i));
+    const glines = grid.selectAll("line").data(yTicks, (d) => d);
+    glines
+      .join(
+        (enter) =>
+          enter
+            .append("line")
+            .attr("x1", 0)
+            .attr("x2", innerW)
+            .attr("y1", (d) => d)
+            .attr("y2", (d) => d)
+            .attr("stroke", "#2a2e3a"),
+        (update) => update.attr("x2", innerW).attr("y1", (d) => d).attr("y2", (d) => d)
+      );
 
-    const y0 = d3.scaleBand().domain(data.map((d) => d.task)).range([0, innerH]).paddingInner(0.22);
-    const y1 = d3.scaleBand().domain(keys).range([0, y0.bandwidth()]).padding(0.16);
-    const x = d3.scaleLinear().domain([0, d3.max(data, (d) => d3.max(keys, (k) => d[k])) || 40]).nice().range([0, innerW]);
+    // Segments
+    const segG = g.select("g.segments");
+    const segs = segG.selectAll("path.segment").data(segments, (d) => d.i);
 
-    const color = d3.scaleOrdinal().domain(keys).range(["#6f7ce8", "#9a7be0", "#b18cf0", "#7b68b6"]);
+    segs
+      .join(
+        (enter) =>
+          enter
+            .append("path")
+            .attr("class", "segment")
+            .attr("fill", (d) => color(d.i))
+            .attr("opacity", 0.9)
+            .attr("d", (d) => d.path)
+            .attr("filter", "url(#soft)")
+            .on("mousemove", function (event, d) {
+              const [mx, my] = d3.pointer(event, this.ownerSVGElement);
+              setTooltip({
+                show: true,
+                x: mx + 12,
+                y: my + 12,
+                html: `<strong>${d.top.label} → ${d.bot.label}</strong><br/>${d.bot.value}% remain`,
+              });
+            })
+            .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })))
+            .call((enter) =>
+              enter
+                .transition()
+                .duration(900)
+                .ease(d3.easeCubicOut)
+                .attrTween("d", function (d) {
+                  const w2Start = d.w1;
+                  const interp = d3.interpolateNumber(w2Start, d.w2);
+                  return function (t) {
+                    const w2t = interp(t);
+                    const cx = d.cx;
+                    const x1L = d.x1L;
+                    const x1R = d.x1R;
+                    const x2L = cx - w2t / 2;
+                    const x2R = cx + w2t / 2;
+                    const r = Math.min(12, Math.abs(d.w1 - w2t) / 4);
+                    return `M ${x1L} ${d.y1}
+                      L ${x1R} ${d.y1}
+                      C ${x1R} ${d.y1 + r} ${x2R} ${d.y2 - r} ${x2R} ${d.y2}
+                      L ${x2L} ${d.y2}
+                      C ${x2L} ${d.y2 - r} ${x1L} ${d.y1 + r} ${x1L} ${d.y1}
+                      Z`;
+                  };
+                })
+            ),
+        (update) =>
+          update
+            .transition()
+            .duration(700)
+            .ease(d3.easeCubicInOut)
+            .attr("d", (d) => d.path)
+            .attr("fill", (d) => color(d.i)),
+        (exit) => exit.remove()
+      );
 
-    const xAxis = d3.axisBottom(x).ticks(6).tickFormat((t) => t + "%").tickPadding(8);
-    const yAxis = d3.axisLeft(y0).tickSize(0).tickPadding(10); // padding added
+    // Stage labels + values
+    const labelG = g.select("g.labels");
+    const stageNodes = labelG.selectAll("g.stage").data(stages, (d) => d.idx);
+    const stageEnter = stageNodes.enter().append("g").attr("class", "stage");
+    stageEnter.append("text").attr("class", "label");
+    stageEnter.append("text").attr("class", "value");
 
-    g.append("g").attr("transform", `translate(0,${innerH})`).call(xAxis);
-    g.append("g").call(yAxis);
-
-    const rows = g
-      .selectAll("g.row")
-      .data(data)
-      .enter()
-      .append("g")
-      .attr("class", "row")
-      .attr("transform", (d) => `translate(0,${y0(d.task)})`);
-
-    rows
-      .selectAll("rect")
-      .data((d) => keys.map((k) => ({ key: k, value: d[k], task: d.task })))
-      .enter()
-      .append("rect")
-      .attr("y", (d) => y1(d.key))
-      .attr("x", 0)
-      .attr("height", y1.bandwidth())
-      .attr("width", (d) => x(d.value))
-      .attr("rx", 6)
-      .attr("fill", (d) => color(d.key))
-      .on("mousemove", (event, d) => {
-        d3.select(tooltipRef.current)
-          .style("left", `${event.offsetX + margin.left + 10}px`)
-          .style("top", `${event.offsetY + margin.top - 10}px`)
-          .style("opacity", 1)
-          .html(`
-            <div class="tt-title">${d.task}</div>
-            <div class="tt-sub">${d.key}</div>
-            <div class="tt-value">${d.value}% not confident</div>
-          `);
-      })
-      .on("mouseleave", () => d3.select(tooltipRef.current).style("opacity", 0));
-
-    const legend = g.append("g").attr("transform", `translate(0, -18)`);
-    const leg = legend
-      .selectAll("g.leg")
-      .data(keys)
-      .enter()
-      .append("g")
-      .attr("class", "leg")
-      .attr("transform", (_d, i) => `translate(${i * Math.min(200, innerW / keys.length + 30)}, -4)`);
-
-    leg.append("rect").attr("width", 12).attr("height", 12).attr("rx", 3).attr("fill", (d) => color(d));
-    leg.append("text").attr("x", 16).attr("y", 10).style("font-size", 12).text((d) => d);
-  }, [bounds, data]);
-
-  return (
-    <ChartFrame title="% not confident in basic cyber security tasks" subtitle="By organisation type; lower is better" height={560}>
-      <div ref={wrapperRef} style={{ position: "relative", width: "100%", height: "100%" }}>
-        <svg ref={svgRef} style={{ width: "100%", height: "100%" }} />
-        <div ref={tooltipRef} className="d3-tooltip" />
-      </div>
-    </ChartFrame>
-  );
-};
-
-
-export const GraduatesStackedBars100 = () => {
-  const wrapperRef = useRef(null);
-  const svgRef = useRef(null);
-  const tooltipRef = useRef(null);
-  const bounds = useResizeObserver(wrapperRef);
-
-  const raw = useMemo(
-    () => [
-      { type: "Cyber UG", Female: 14, Male: 86 },
-      { type: "Cyber PG", Female: 24, Male: 76 },
-      { type: "CS UG", Female: 19, Male: 81 },
-      { type: "CS PG", Female: 33, Male: 67 },
-    ],
-    []
-  );
-
-  useEffect(() => {
-    if (!bounds) return;
-    const { width, height } = bounds;
-    const margin = { top: 28, right: 20, bottom: 62, left: 56 }; 
-    const innerW = Math.max(260, width - margin.left - margin.right);
-    const innerH = Math.max(220, height - margin.top - margin.bottom);
-
-    const svg = d3
-      .select(svgRef.current)
-      .attr("viewBox", `0 0 ${width} ${height}`)
-      .attr("role", "img")
-      .attr("aria-label", "Gender identity of cyber and CS graduates (100% stacked)");
-    svg.selectAll("*").remove();
-    const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
-
-    const keys = ["Female", "Male"];
-    const x = d3.scaleBand().domain(raw.map((d) => d.type)).range([0, innerW]).padding(0.3);
-    const y = d3.scaleLinear().domain([0, 100]).range([innerH, 0]);
-    const color = d3.scaleOrdinal().domain(keys).range(["#6f7ce8", "#9a7be0"]);
-
-    const stackGen = d3.stack().keys(keys).order(d3.stackOrderNone).offset(d3.stackOffsetExpand);
-    const stacked = stackGen(raw.map((row) => ({ ...row })));
-    stacked.forEach((layer) => {
-      layer.forEach((segment) => {
-        segment[0] *= 100;
-        segment[1] *= 100;
+    stageNodes
+      .merge(stageEnter)
+      .attr("transform", (_d, i) => `translate(${innerW / 2}, ${yScale(i)})`)
+      .each(function (d, i) {
+        const node = d3.select(this);
+        node
+          .select("text.label")
+          .attr("text-anchor", "middle")
+          .attr("dy", -14)
+          .style("font-weight", i === 0 ? 700 : 600)
+          .style("fill", "#eae7ff")
+          .text(d.label);
+        node
+          .select("text.value")
+          .attr("text-anchor", "middle")
+          .attr("dy", 18)
+          .style("fill", "#b7d7ff")
+          .text(d3.format(".0f")(d.value) + "%");
       });
-    });
-    const series = stacked;
 
-    
-    g.append("g")
-      .attr("transform", `translate(0,${innerH})`)
-      .call(d3.axisBottom(x).tickPadding(10));
-    g.append("g").call(d3.axisLeft(y).ticks(6).tickFormat((t) => t + "%").tickPadding(10));
+    stageNodes.exit().remove();
 
-   
-    const groups = g
-      .selectAll("g.layer")
-      .data(series)
-      .enter()
-      .append("g")
-      .attr("fill", (s) => color(s.key));
+    // Title + desc
+    svg
+      .select("text.chart-title")
+      .attr("x", width / 2)
+      .attr("y", 24)
+      .attr("text-anchor", "middle")
+      .style("font-weight", 700)
+      .style("font-size", 18)
+      .style("fill", "#eae7ff")
+      .text(title);
 
-    groups
-      .selectAll("rect")
-      .data((s) => s)
-      .enter()
-      .append("rect")
-      .attr("x", (seg) => x(seg.data.type))
-      .attr("y", (seg) => y(seg[1]))
-      .attr("height", (seg) => y(seg[0]) - y(seg[1]))
-      .attr("width", x.bandwidth())
-      .attr("rx", 6)
-      .on("mousemove", (event, seg) => {
-        const key = d3.select(event.target.parentNode).datum().key;
-        const value = Math.round(seg.data[key]);
-        d3.select(tooltipRef.current)
-          .style("left", `${event.offsetX + margin.left + 10}px`)
-          .style("top", `${event.offsetY + margin.top - 10}px`)
-          .style("opacity", 1)
-          .html(`
-            <div class="tt-title">${seg.data.type}</div>
-            <div class="tt-sub">${key}</div>
-            <div class="tt-value">${value}%</div>
-          `);
-      })
-      .on("mouseleave", () => d3.select(tooltipRef.current).style("opacity", 0));
-
-  
-    const legend = g.append("g").attr("transform", `translate(0, -18)`);
-    const leg = legend
-      .selectAll("g.leg")
-      .data(keys)
-      .enter()
-      .append("g")
-      .attr("class", "leg")
-      .attr("transform", (_d, i) => `translate(${i * 120}, -4)`);
-
-    leg.append("rect").attr("width", 12).attr("height", 12).attr("rx", 3).attr("fill", (d) => color(d));
-    leg.append("text").attr("x", 16).attr("y", 10).style("font-size", 12).text((d) => d);
-  }, [bounds, raw]);
+    svg.select("desc.desc").text(desc);
+  }, [segments, stages, xScale, yScale, color, width, height, innerW, innerH, margin, title, desc]);
 
   return (
-    <ChartFrame title="Gender identity of cyber & CS graduates (2021/22)" subtitle="Each bar sums to 100%" height={380}>
-      <div ref={wrapperRef} style={{ position: "relative", width: "100%", height: "100%" }}>
-        <svg ref={svgRef} style={{ width: "100%", height: "100%" }} />
-        <div ref={tooltipRef} className="d3-tooltip" />
-      </div>
-    </ChartFrame>
-  );
-};
+    <div ref={wrapRef} style={{ position: "relative", width: "100%" }}>
+      <svg ref={svgRef} width={width} height={height}>
+        <desc className="desc">{desc}</desc>
+        <rect className="bg" />
+        <defs>
+          {/* soft shadow */}
+          <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="6" result="blur" />
+            <feOffset in="blur" dx="0" dy="2" result="off" />
+            <feComponentTransfer>
+              <feFuncA type="linear" slope="0.35" />
+            </feComponentTransfer>
+            <feMerge>
+              <feMergeNode in="off" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <text className="chart-title" />
+        <g className="inner" transform={`translate(${margin.left},${margin.top})`}>
+          <g className="grid" />
+          <g className="segments" />
+          <g className="labels" />
+        </g>
+      </svg>
 
+      {/* Tooltip */}
+      {tooltip.show && (
+        <div
+          style={{
+            position: "absolute",
+            left: tooltip.x,
+            top: tooltip.y,
+            background: "#11131a",
+            color: "#eae7ff",
+            border: "1px solid #2a2e3a",
+            borderRadius: 8,
+            padding: "8px 10px",
+            pointerEvents: "none",
+            boxShadow: "0 6px 18px rgba(0,0,0,0.35)",
+            fontSize: 12,
+            whiteSpace: "nowrap",
+          }}
+          dangerouslySetInnerHTML={{ __html: tooltip.html }}
+        />
+      )}
 
-export default function D3CyberChartsDemo() {
-  return (
-    <div>
-      <DiversityGroupedBars />
-      <ConfidenceGroupedBars />
-      <GraduatesStackedBars100 />
+      <style>{`
+        .grid line { stroke: #2a2e3a; }
+        text { font-family: ui-sans-serif, system-ui, Inter, Segoe UI, Roboto; }
+      `}</style>
     </div>
   );
 }

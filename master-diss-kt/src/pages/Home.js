@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import homeImage from "../image/home.png";
-import { DiversityGroupedBars, ConfidenceGroupedBars, GraduatesStackedBars100 } from "../components/D3CyberCharts";
+
 
 function Home() {
   return (
@@ -49,11 +49,7 @@ function Home() {
       <img src={homeImage} alt="Cyber Careers Hub" className="home-image" />
 
     
-      <section style={{ maxWidth: 1100, margin: "2rem auto", padding: "0 1rem" }}>
-        <DiversityGroupedBars />
-        <ConfidenceGroupedBars />
-        <GraduatesStackedBars100 />
-      </section>
+
     </div>
   );
 }
