@@ -45,34 +45,19 @@ const ChartFrame = ({ title, subtitle, height = 360, children }) => (
 
 export function BreachImpactBars({
   data = [
-    { label: "All orgs (baseline)", value: 100 },
     { label: "Breached", value: 87 },
     { label: ">£1M loss", value: 53 },
     { label: "Leaders penalised", value: 51 },
   ],
-  width = 720,
-  height = 300, // auto-sizes a bit via band padding; tweak as needed
-  margin = { top: 48, right: 28, bottom: 40, left: 180 },
-  title = "Breach impact snapshot",
-  subtitle = "Share of organisations (%)",
+  width = 640,
+  height = 320,
+  margin = { top: 56, right: 28, bottom: 48, left: 180 },
+  title = "Breach impact",
+  subtitle = "Share of organisations affected",
 }) {
   const svgRef = React.useRef(null);
   const [tooltip, setTooltip] = React.useState({ show: false, x: 0, y: 0, html: "" });
 
-  // Light theme tokens (memoized to keep ESLint happy)
-  const C = React.useMemo(
-    () => ({
-      bg: "#ffffff",
-      ink: "#1f2544",
-      muted: "#4b4f6b",
-      grid: "#e9ebf5",
-      purple: "#6f7ce8",
-      pink: "#ff6ad5",
-    }),
-    []
-  );
-
-  // Sanitise values
   const rows = React.useMemo(
     () =>
       data.map((d, i) => ({
@@ -83,48 +68,80 @@ export function BreachImpactBars({
     [data]
   );
 
-  // Layout + scales
-  const innerW = width - margin.left - margin.right;
-  const innerH = height - margin.top - margin.bottom;
+  const innerW = React.useMemo(() => Math.max(50, width - margin.left - margin.right), [width, margin]);
+  const innerH = React.useMemo(() => Math.max(50, height - margin.top - margin.bottom), [height, margin]);
+
+  const x = React.useMemo(() => d3.scaleLinear().domain([0, 100]).range([0, innerW]).nice(), [innerW]);
   const y = React.useMemo(
-    () => d3.scaleBand().domain(rows.map((d) => d.label)).range([0, innerH]).padding(0.35),
+    () => d3.scaleBand().domain(rows.map((d) => d.label)).range([0, innerH]).padding(0.2),
     [rows, innerH]
   );
-  const x = React.useMemo(() => d3.scaleLinear().domain([0, 100]).range([0, innerW]).nice(), [innerW]);
+
+  const colors = React.useMemo(
+    () => ({
+      cardBg: "#ffffff",
+      ink: "#1f2544",
+      muted: "#4b4f6b",
+      grid: "#e9ebf5",
+      bar: "#6f7ce8",      // main bar color
+      barAlt: "#9a7be0",   // end-cap/gradient hint (optional)
+    }),
+    []
+  );
 
   React.useEffect(() => {
     const svg = d3.select(svgRef.current);
-    svg.attr("role", "img").attr("aria-label", title).attr("viewBox", `0 0 ${width} ${height}`);
-    svg.select("rect.bg").attr("width", width).attr("height", height).attr("fill", C.bg);
+    svg
+      .attr("role", "img")
+      .attr("aria-label", title)
+      .attr("viewBox", `0 0 ${width} ${height}`)
+      .attr("preserveAspectRatio", "xMidYMid meet");
 
-    // Title
+    // background behind the plot area
+    svg.select("rect.bg").attr("width", width).attr("height", height).attr("fill", colors.cardBg);
+
+    // title/subtitle
     svg
       .select("text.chart-title")
       .attr("x", width / 2)
-      .attr("y", 26)
+      .attr("y", 24)
       .attr("text-anchor", "middle")
-      .style("fill", C.ink)
+      .style("fill", colors.ink)
       .style("font-weight", 700)
       .style("font-size", 18)
       .text(title);
 
-    // Subtitle (extra space below for breathing room)
     svg
       .select("text.chart-subtitle")
       .attr("x", width / 2)
-      .attr("y", 46)
+      .attr("y", 44)
       .attr("text-anchor", "middle")
-      .style("fill", C.muted)
+      .style("fill", colors.muted)
       .style("font-weight", 600)
       .style("font-size", 12)
       .text(subtitle);
 
     const g = svg.select("g.inner").attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // Grid (vertical) at 0–100 ticks
-    const gridTicks = x.ticks(5);
-    const grid = g.select("g.grid").selectAll("line.grid-x").data(gridTicks, (d) => d);
-    grid
+    // X axis
+    const xAxisG = g.select("g.x-axis").attr("transform", `translate(0, ${innerH})`);
+    const axis = d3.axisBottom(x).ticks(5).tickFormat((t) => `${t}%`);
+    xAxisG.call(axis);
+    xAxisG.selectAll("path, line").attr("stroke", colors.grid);
+    xAxisG.selectAll("text").attr("fill", colors.muted).style("font-weight", 600);
+
+    // Y axis (category labels)
+    const yAxisG = g.select("g.y-axis");
+    const yAxis = d3.axisLeft(y).tickSize(0);
+    yAxisG.call(yAxis);
+    yAxisG.selectAll("path").attr("stroke", "none");
+    yAxisG.selectAll("text").attr("fill", colors.ink).style("font-weight", 600);
+
+    // Gridlines (vertical)
+    const gridG = g.select("g.grid");
+    gridG
+      .selectAll("line.grid-x")
+      .data(x.ticks(5), (d) => d)
       .join(
         (enter) =>
           enter
@@ -134,40 +151,9 @@ export function BreachImpactBars({
             .attr("x2", (d) => x(d))
             .attr("y1", 0)
             .attr("y2", innerH)
-            .attr("stroke", C.grid),
+            .attr("stroke", colors.grid),
         (update) => update.attr("x1", (d) => x(d)).attr("x2", (d) => x(d)).attr("y2", innerH),
         (exit) => exit.remove()
-      );
-
-    // Axes
-    const xAxis = d3.axisBottom(x).ticks(5).tickFormat((t) => `${t}%`);
-    const xAxisG = g.select("g.x-axis").attr("transform", `translate(0,${innerH})`).call(xAxis);
-    xAxisG.selectAll("path, line").attr("stroke", C.grid);
-    xAxisG.selectAll("text").attr("fill", C.muted).style("font-weight", 600);
-
-    const yAxis = d3.axisLeft(y);
-    const yAxisG = g.select("g.y-axis").call(yAxis);
-    yAxisG.selectAll("path, line").attr("stroke", "transparent");
-    yAxisG.selectAll("text").attr("fill", C.ink).style("font-weight", 600);
-
-    // Gradient for bars (purple → pink)
-    const defs = svg.select("defs.gradients");
-    defs
-      .selectAll("linearGradient.hbar")
-      .data([0])
-      .join((enter) =>
-        enter
-          .append("linearGradient")
-          .attr("class", "hbar")
-          .attr("id", "barGrad")
-          .attr("x1", "0%")
-          .attr("y1", "0%")
-          .attr("x2", "100%")
-          .attr("y2", "0%")
-          .call((lg) => {
-            lg.append("stop").attr("offset", "0%").attr("stop-color", "#cfd6ff");
-            lg.append("stop").attr("offset", "100%").attr("stop-color", C.pink);
-          })
       );
 
     // Bars
@@ -178,57 +164,52 @@ export function BreachImpactBars({
           enter
             .append("rect")
             .attr("class", "bar")
-            .attr("x", 0)
-            .attr("y", (d) => y(d.label))
+            .attr("x", x(0))
+            .attr("y", (d) => y(d.label) ?? 0)
             .attr("height", y.bandwidth())
-            .attr("width", (d) => x(d.value))
+            .attr("width", (d) => x(d.value) - x(0))
             .attr("rx", 8)
-            .attr("fill", "url(#barGrad)")
+            .attr("fill", colors.bar)
             .on("mousemove", function (event, d) {
               const [mx, my] = d3.pointer(event, svg.node());
-              const tipW = 220,
-                tipH = 54,
-                pad = 10;
-              const tx = Math.max(pad, Math.min(mx + 12, width - tipW - pad));
-              const ty = Math.max(pad, Math.min(my + 12, height - tipH - pad));
               setTooltip({
                 show: true,
-                x: tx,
-                y: ty,
+                x: mx + 12,
+                y: my + 12,
                 html: `<strong>${d.label}</strong><br/>${d.value}%`,
               });
             })
             .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false }))),
         (update) =>
           update
-            .attr("y", (d) => y(d.label))
+            .attr("y", (d) => y(d.label) ?? 0)
             .attr("height", y.bandwidth())
-            .attr("width", (d) => x(d.value)),
+            .attr("width", (d) => x(d.value) - x(0)),
         (exit) => exit.remove()
       );
 
-    // Value labels at bar ends
-    const labels = g.select("g.values").selectAll("text.val").data(rows, (d) => d.label);
-    labels
+    // Value labels at bar end
+    const vals = g.select("g.vals").selectAll("text.val").data(rows, (d) => d.label);
+    vals
       .join(
         (enter) =>
           enter
             .append("text")
             .attr("class", "val")
             .attr("x", (d) => x(d.value) + 8)
-            .attr("y", (d) => (y(d.label) ?? 0) + y.bandwidth() / 2)
-            .attr("dominant-baseline", "middle")
-            .style("fill", C.muted)
+            .attr("y", (d) => (y(d.label) ?? 0) + y.bandwidth() / 2 + 4)
+            .attr("text-anchor", "start")
+            .style("fill", colors.ink)
             .style("font-weight", 700)
             .text((d) => `${d.value}%`),
         (update) =>
           update
             .attr("x", (d) => x(d.value) + 8)
-            .attr("y", (d) => (y(d.label) ?? 0) + y.bandwidth() / 2)
+            .attr("y", (d) => (y(d.label) ?? 0) + y.bandwidth() / 2 + 4)
             .text((d) => `${d.value}%`),
         (exit) => exit.remove()
       );
-  }, [rows, width, height, margin, innerW, innerH, x, y, C, title, subtitle]);
+  }, [rows, width, height, margin, innerW, innerH, x, y, colors, title, subtitle]);
 
   return (
     <div
@@ -236,28 +217,27 @@ export function BreachImpactBars({
         position: "relative",
         maxWidth: width,
         margin: "2rem auto",
-        padding: 16,
+        padding: 16,                // card padding so nothing touches the edges
         background: "#fff",
         borderRadius: 16,
         boxShadow: "0 12px 28px rgba(24,33,95,0.12)",
         border: "1px solid #e9ebf5",
+        overflow: "hidden",         // clip to rounded corners
       }}
     >
-      <svg ref={svgRef} width={width} height={height} style={{ display: "block" }}>
+      <svg ref={svgRef} style={{ width: "100%", height: "auto", display: "block" }}>
         <rect className="bg" />
-        <defs className="gradients" />
         <text className="chart-title" />
         <text className="chart-subtitle" />
         <g className="inner" transform={`translate(${margin.left},${margin.top})`}>
           <g className="grid" />
           <g className="bars" />
-          <g className="values" />
+          <g className="vals" />
           <g className="x-axis" />
           <g className="y-axis" />
         </g>
       </svg>
 
-      {/* Light tooltip, clamped inside card */}
       {tooltip.show && (
         <div
           style={{
@@ -268,19 +248,18 @@ export function BreachImpactBars({
             color: "#1f2544",
             border: "1px solid #e9ebf5",
             borderRadius: 10,
-            padding: "8px 10px",
+            padding: "10px 12px",
             pointerEvents: "none",
             boxShadow: "0 10px 22px rgba(24,33,95,0.14)",
-            fontSize: 12.5,
-            whiteSpace: "nowrap",
+            fontSize: 13,
+            lineHeight: 1.4,
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            maxWidth: 260,
           }}
           dangerouslySetInnerHTML={{ __html: tooltip.html }}
         />
       )}
-
-      <style>{`
-        text { font-family: ui-sans-serif, system-ui, Inter, Segoe UI, Roboto; }
-      `}</style>
     </div>
   );
 }
@@ -781,29 +760,34 @@ export function DumbbellParity({
   ],
   width = 720,
   height = 260,
-  margin = { top: 36, right: 32, bottom: 48, left: 160 },
+  margin = { top: 36, right: 32, bottom: 52, left: 160 },
   title = "Representation gaps to parity (50%)",
   subtitle = "UK cyber workforce",
 }) {
-  const svgRef = useRef(null);
-  const [tooltip, setTooltip] = useState({ show: false, x: 0, y: 0, html: "" });
+  const svgRef = React.useRef(null);
+  const [tooltip, setTooltip] = React.useState({ show: false, x: 0, y: 0, html: "" });
 
-  const innerW = width - margin.left - margin.right;
-  const innerH = height - margin.top - margin.bottom;
-
-  const rows = useMemo(
-    () => data.map((d, i) => ({ label: d.label, value: Math.max(0, Math.min(100, +d.value || 0)), i })),
+  // Scales & constants (memoized to keep eslint happy)
+  const rows = React.useMemo(
+    () =>
+      data.map((d, i) => ({
+        label: d.label,
+        value: Math.max(0, Math.min(100, +d.value || 0)),
+        i,
+      })),
     [data]
   );
 
-  const x = useMemo(() => d3.scaleLinear().domain([0, 50]).range([0, innerW]).nice(), [innerW]);
-  const y = useMemo(
-    () => d3.scalePoint().domain(rows.map((d) => d.label)).range([0, innerH]).padding(0.8),
+  const innerW = React.useMemo(() => width - margin.left - margin.right, [width, margin]);
+  const innerH = React.useMemo(() => height - margin.top - margin.bottom, [height, margin]);
+
+  const x = React.useMemo(() => d3.scaleLinear().domain([0, 50]).range([0, innerW]).nice(), [innerW]);
+  const y = React.useMemo(
+    () => d3.scalePoint().domain(rows.map((d) => d.label)).range([0, innerH]).padding(0.9),
     [rows, innerH]
   );
 
-  // Light theme
-  const colors = useMemo(
+  const colors = React.useMemo(
     () => ({
       bg: "#ffffff",
       ink: "#1f2544",
@@ -815,28 +799,53 @@ export function DumbbellParity({
     []
   );
 
-  useEffect(() => {
+  React.useEffect(() => {
     const svg = d3.select(svgRef.current);
-    svg.attr("role", "img").attr("aria-label", title).attr("viewBox", `0 0 ${width} ${height}`);
 
-    // background
+    // Responsive frame
+    svg.attr("role", "img").attr("aria-label", title).attr("viewBox", `0 0 ${width} ${height}`).attr("preserveAspectRatio", "xMidYMid meet");
+
+    // background (for a crisp white behind the chart area)
     svg.select("rect.bg").attr("width", width).attr("height", height).attr("fill", colors.bg);
 
-    const g = svg.select("g.inner").attr("transform", `translate(${margin.left},${margin.top})`);
+    // Title / subtitle
+    svg
+      .select("text.chart-title")
+      .attr("x", width / 2)
+      .attr("y", 24)
+      .attr("text-anchor", "middle")
+      .style("fill", colors.ink)
+      .style("font-weight", 700)
+      .style("font-size", 18)
+      .text(title);
 
-    // X Axis
+    svg
+      .select("text.chart-subtitle")
+      .attr("x", width / 2)
+      .attr("y", 44)
+      .attr("text-anchor", "middle")
+      .style("fill", colors.muted)
+      .style("font-weight", 600)
+      .style("font-size", 12)
+      .text(subtitle);
+
+    // Inner group — small global scale so labels don’t clip small cards
+    const g = svg
+      .select("g.inner")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // X axis
     const xAxisG = g.select("g.x-axis").attr("transform", `translate(0, ${innerH})`);
     const axis = d3.axisBottom(x).ticks(5).tickFormat((t) => `${t}%`);
     xAxisG.call(axis);
     xAxisG.selectAll("path, line").attr("stroke", colors.grid);
     xAxisG.selectAll("text").attr("fill", colors.muted).style("font-weight", 600);
 
-    // Gridlines
+    // Vertical grid lines
     const gridG = g.select("g.grid");
-    const xticks = x.ticks(5);
     gridG
       .selectAll("line.grid-x")
-      .data(xticks, (d) => d)
+      .data(x.ticks(5), (d) => d)
       .join(
         (enter) =>
           enter
@@ -848,26 +857,29 @@ export function DumbbellParity({
             .attr("y2", innerH)
             .attr("stroke", colors.grid),
         (update) =>
-          update.attr("x1", (d) => x(d)).attr("x2", (d) => x(d)).attr("y2", innerH).attr("stroke", colors.grid),
+          update
+            .attr("x1", (d) => x(d))
+            .attr("x2", (d) => x(d))
+            .attr("y2", innerH),
         (exit) => exit.remove()
       );
 
-    // Gradients per row (fade purple → pink toward target)
+    // Gradients per row (fade toward target)
     const defs = svg.select("defs.gradients");
     defs
       .selectAll("linearGradient.rowGrad")
       .data(rows, (d) => d.label)
       .join(
-        (enter) =>
-          enter
+        (enter) => {
+          const lg = enter
             .append("linearGradient")
             .attr("class", "rowGrad")
             .attr("gradientUnits", "userSpaceOnUse")
-            .attr("id", (d) => `rowGrad-${d.i}`)
-            .call((lg) => {
-              lg.append("stop").attr("offset", 0).attr("stop-color", colors.purple).attr("stop-opacity", 1);
-              lg.append("stop").attr("offset", 1).attr("stop-color", colors.pink).attr("stop-opacity", 0.35);
-            }),
+            .attr("id", (d) => `rowGrad-${d.i}`);
+          lg.append("stop").attr("offset", 0).attr("stop-color", colors.purple).attr("stop-opacity", 1);
+          lg.append("stop").attr("offset", 1).attr("stop-color", colors.pink).attr("stop-opacity", 0.35);
+          return lg;
+        },
         (update) => update,
         (exit) => exit.remove()
       )
@@ -899,14 +911,15 @@ export function DumbbellParity({
             .attr("y1", (d) => y(d.label))
             .attr("y2", (d) => y(d.label))
             .attr("x1", (d) => x(Math.min(d.value, 50)))
-            .attr("x2", x(50))
+            .attr("x2", (d) => x(50))
             .attr("stroke", (d) => `url(#rowGrad-${d.i})`),
         (exit) => exit.remove()
       );
 
-    // Current dots (left)
-    const dots = rowG.selectAll("circle.dot").data(rows, (d) => d.label);
-    dots
+    // Dots
+    rowG
+      .selectAll("circle.dot")
+      .data(rows, (d) => d.label)
       .join(
         (enter) =>
           enter
@@ -916,7 +929,7 @@ export function DumbbellParity({
             .attr("cx", (d) => x(Math.min(d.value, 50)))
             .attr("cy", (d) => y(d.label))
             .attr("fill", colors.purple)
-            .style("filter", "drop-shadow(0 2px 6px rgba(0,0,0,.15))")
+            .style("filter", "drop-shadow(0 2px 6px rgba(0,0,0,.20))")
             .on("mousemove", function (event, d) {
               const [mx, my] = d3.pointer(event, svg.node());
               const gap = 50 - Math.min(d.value, 50);
@@ -930,6 +943,8 @@ export function DumbbellParity({
             .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false }))),
         (update) =>
           update
+            .attr("cx", (d) => x(Math.min(d.value, 50)))
+            .attr("cy", (d) => y(d.label))
             .on("mousemove", function (event, d) {
               const [mx, my] = d3.pointer(event, svg.node());
               const gap = 50 - Math.min(d.value, 50);
@@ -939,14 +954,11 @@ export function DumbbellParity({
                 y: my + 12,
                 html: `<strong>${d.label}</strong><br/>Current: ${d.value}%<br/>Gap to parity: ${d3.format(".0f")(gap)}pp`,
               });
-            })
-            .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })))
-            .attr("cx", (d) => x(Math.min(d.value, 50)))
-            .attr("cy", (d) => y(d.label)),
+            }),
         (exit) => exit.remove()
       );
 
-    // Target ticks (at 50%)
+    // Target diamonds
     const tickShape = d3.symbol().type(d3.symbolSquare).size(60);
     rowG
       .selectAll("path.target")
@@ -973,6 +985,7 @@ export function DumbbellParity({
             .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false }))),
         (update) =>
           update
+            .attr("transform", (d) => `translate(${x(50)}, ${y(d.label)}) rotate(45)`)
             .on("mousemove", function (event, d) {
               const [mx, my] = d3.pointer(event, svg.node());
               const gap = 50 - Math.min(d.value, 50);
@@ -982,9 +995,7 @@ export function DumbbellParity({
                 y: my + 12,
                 html: `<strong>${d.label}</strong><br/>Target: 50%<br/>Gap: ${d3.format(".0f")(gap)}pp`,
               });
-            })
-            .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })))
-            .attr("transform", (d) => `translate(${x(50)}, ${y(d.label)}) rotate(45)`),
+            }),
         (exit) => exit.remove()
       );
 
@@ -1008,27 +1019,6 @@ export function DumbbellParity({
         (update) => update.attr("y", (d) => y(d.label)),
         (exit) => exit.remove()
       );
-
-    // Title & subtitle
-    svg
-      .select("text.chart-title")
-      .attr("x", width / 2)
-      .attr("y", 24)
-      .attr("text-anchor", "middle")
-      .style("fill", colors.ink)
-      .style("font-weight", 700)
-      .style("font-size", 18)
-      .text(title);
-
-    svg
-      .select("text.chart-subtitle")
-      .attr("x", width / 2)
-      .attr("y", 44)
-      .attr("text-anchor", "middle")
-      .style("fill", colors.muted)
-      .style("font-weight", 600)
-      .style("font-size", 12)
-      .text(subtitle);
   }, [rows, width, height, margin, innerW, innerH, x, y, colors, title, subtitle]);
 
   return (
@@ -1037,14 +1027,18 @@ export function DumbbellParity({
         position: "relative",
         maxWidth: width,
         margin: "2rem auto",
-        padding: "16px",
+        padding: 16,                 // extra card padding
         background: "#fff",
         borderRadius: 16,
         boxShadow: "0 12px 28px rgba(24,33,95,0.12)",
         border: "1px solid #e9ebf5",
+        overflow: "hidden",          // clip anything that might overflow rounded corners
       }}
     >
-      <svg ref={svgRef} width={width} height={height} style={{ display: "block" }}>
+      <svg
+        ref={svgRef}
+        style={{ width: "100%", height: "auto", display: "block" }} // responsive
+      >
         <rect className="bg" />
         <defs className="gradients" />
         <text className="chart-title" />
@@ -1057,7 +1051,6 @@ export function DumbbellParity({
         </g>
       </svg>
 
-      {/* Tooltip (light theme) */}
       {tooltip.show && (
         <div
           style={{
@@ -1068,11 +1061,14 @@ export function DumbbellParity({
             color: "#1f2544",
             border: "1px solid #e9ebf5",
             borderRadius: 10,
-            padding: "8px 10px",
+            padding: "10px 12px",
             pointerEvents: "none",
             boxShadow: "0 10px 22px rgba(24,33,95,0.14)",
-            fontSize: 12,
-            whiteSpace: "nowrap",
+            fontSize: 13,
+            lineHeight: 1.4,
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            maxWidth: 280,
           }}
           dangerouslySetInnerHTML={{ __html: tooltip.html }}
         />
@@ -1396,7 +1392,7 @@ export function PackedCirclesOutcomeGauge({
       program: m.program ?? "",
     }));
     const root = d3.hierarchy({ children }).sum((d) => d.value);
-    const pack = d3.pack().size([bubblesW, bubblesH]).padding(12);
+    const pack = d3.pack().size([bubblesW, bubblesH]).padding(24);
     return pack(root).leaves().map((leaf) => ({
       id: leaf.data.id,
       label: leaf.data.label,

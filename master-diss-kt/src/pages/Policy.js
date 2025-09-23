@@ -47,10 +47,9 @@ function Policy() {
         breaches.
       </p>
       <BreachImpactBars
-        title="Breach impact snapshot"
-        subtitle="Share of organisations (%)"
+        title="Breach impact"
+        subtitle="Share of organisations affected"
         data={[
-          { label: "All orgs (baseline)", value: 100 },
           { label: "Breached", value: 87 },
           { label: ">£1M loss", value: 53 },
           { label: "Leaders penalised", value: 51 },
