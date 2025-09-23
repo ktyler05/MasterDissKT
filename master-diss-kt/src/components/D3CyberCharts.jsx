@@ -43,7 +43,6 @@ const ChartFrame = ({ title, subtitle, height = 360, children }) => (
   </section>
 );
 
-
 export function BreachImpactFunnel({
   data = [
     { label: "All orgs", value: 100 },
@@ -476,8 +475,8 @@ export const SchoolReadinessStacked100 = () => {
   );
 };
 export function ConcentricRadialGauges({
-  basic = 44,             // basic shortfall %
-  advanced = 27,          // advanced shortfall %
+  basic = 44, // basic shortfall %
+  advanced = 27, // advanced shortfall %
   width = 520,
   height = 420,
   margin = { top: 24, right: 24, bottom: 24, left: 24 },
@@ -492,16 +491,19 @@ export function ConcentricRadialGauges({
   const cy = innerH / 2 + 10; // nudge slightly down to balance title
 
   // Theme tokens (kept inside component; include in deps since object identity changes)
-  const colors = {
-    bg: "#0b0b12",
-    ink: "#eae7ff",
-    muted: "#9aa0b3",
-    grid: "#2a2e3a",
-    purple: "#A78BFA",
-    pink: "#FF6AD5",
-    track: "#2a2e3a",
-    accent: "#ffd166",
-  };
+  const colors = useMemo(
+    () => ({
+      bg: "#0b0b12",
+      ink: "#eae7ff",
+      muted: "#9aa0b3",
+      grid: "#2a2e3a",
+      purple: "#A78BFA",
+      pink: "#FF6AD5",
+      track: "#2a2e3a",
+      accent: "#ffd166",
+    }),
+    []
+  );
 
   // radii for rings (recompute on size change)
   const rings = useMemo(() => {
@@ -517,11 +519,22 @@ export function ConcentricRadialGauges({
   const advVal = Math.max(0, Math.min(100, +advanced || 0));
 
   // arc generators (safe to recreate each render)
-  const arcOuter = d3.arc().innerRadius(rings.outer.r0).outerRadius(rings.outer.r1).cornerRadius(12);
-  const arcInner = d3.arc().innerRadius(rings.inner.r0).outerRadius(rings.inner.r1).cornerRadius(12);
+  const arcOuter = d3
+    .arc()
+    .innerRadius(rings.outer.r0)
+    .outerRadius(rings.outer.r1)
+    .cornerRadius(12);
+  const arcInner = d3
+    .arc()
+    .innerRadius(rings.inner.r0)
+    .outerRadius(rings.inner.r1)
+    .cornerRadius(12);
 
   const startAngle = -Math.PI / 2; // 12 o'clock
-  const scale = d3.scaleLinear().domain([0, 100]).range([0, 2 * Math.PI]);
+  const scale = d3
+    .scaleLinear()
+    .domain([0, 100])
+    .range([0, 2 * Math.PI]);
 
   useEffect(() => {
     const svg = d3.select(svgRef.current);
@@ -531,9 +544,15 @@ export function ConcentricRadialGauges({
       .attr("aria-label", title)
       .attr("viewBox", `0 0 ${width} ${height}`);
 
-    svg.select("rect.bg").attr("width", width).attr("height", height).attr("fill", colors.bg);
+    svg
+      .select("rect.bg")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("fill", colors.bg);
 
-    const g = svg.select("g.inner").attr("transform", `translate(${margin.left},${margin.top})`);
+    const g = svg
+      .select("g.inner")
+      .attr("transform", `translate(${margin.left},${margin.top})`);
 
     // BACK TRACKS
     const tracks = [
@@ -542,33 +561,52 @@ export function ConcentricRadialGauges({
     ];
     const trackG = g.select("g.tracks");
     const tpaths = trackG.selectAll("path.track").data(tracks, (d) => d.key);
-    tpaths
-      .join(
-        (enter) =>
-          enter
-            .append("path")
-            .attr("class", "track")
-            .attr("transform", `translate(${cx},${cy})`)
-            .attr("fill", "none")
-            .attr("stroke", (d) => d.color)
-            .attr("stroke-width", (d) =>
-              d.key === "outer" ? rings.outer.r1 - rings.outer.r0 : rings.inner.r1 - rings.inner.r0
-            )
-            .attr("d", (d) => d.arc({ startAngle, endAngle: startAngle + scale(100) })),
-        (update) =>
-          update
-            .attr("transform", `translate(${cx},${cy})`)
-            .attr("stroke-width", (d) =>
-              d.key === "outer" ? rings.outer.r1 - rings.outer.r0 : rings.inner.r1 - rings.inner.r0
-            )
-            .attr("d", (d) => d.arc({ startAngle, endAngle: startAngle + scale(100) })),
-        (exit) => exit.remove()
-      );
+    tpaths.join(
+      (enter) =>
+        enter
+          .append("path")
+          .attr("class", "track")
+          .attr("transform", `translate(${cx},${cy})`)
+          .attr("fill", "none")
+          .attr("stroke", (d) => d.color)
+          .attr("stroke-width", (d) =>
+            d.key === "outer"
+              ? rings.outer.r1 - rings.outer.r0
+              : rings.inner.r1 - rings.inner.r0
+          )
+          .attr("d", (d) =>
+            d.arc({ startAngle, endAngle: startAngle + scale(100) })
+          ),
+      (update) =>
+        update
+          .attr("transform", `translate(${cx},${cy})`)
+          .attr("stroke-width", (d) =>
+            d.key === "outer"
+              ? rings.outer.r1 - rings.outer.r0
+              : rings.inner.r1 - rings.inner.r0
+          )
+          .attr("d", (d) =>
+            d.arc({ startAngle, endAngle: startAngle + scale(100) })
+          ),
+      (exit) => exit.remove()
+    );
 
     // ACTIVE ARCS
     const arcsData = [
-      { key: "basic", value: basicVal, arc: arcOuter, stroke: colors.purple, fill: "url(#gradOuter)" },
-      { key: "advanced", value: advVal, arc: arcInner, stroke: colors.pink, fill: "url(#gradInner)" },
+      {
+        key: "basic",
+        value: basicVal,
+        arc: arcOuter,
+        stroke: colors.purple,
+        fill: "url(#gradOuter)",
+      },
+      {
+        key: "advanced",
+        value: advVal,
+        arc: arcInner,
+        stroke: colors.pink,
+        fill: "url(#gradInner)",
+      },
     ];
 
     const arcsG = g.select("g.arcs");
@@ -580,44 +618,48 @@ export function ConcentricRadialGauges({
         show: true,
         x: mx + 12,
         y: my + 12,
-        html: `<strong>${d.key === "basic" ? "Basic shortfall" : "Advanced shortfall"}</strong><br/>${d.value}%`,
+        html: `<strong>${
+          d.key === "basic" ? "Basic shortfall" : "Advanced shortfall"
+        }</strong><br/>${d.value}%`,
       });
     };
 
-    arcs
-      .join(
-        (enter) =>
-          enter
-            .append("path")
-            .attr("class", "arc")
-            .attr("transform", `translate(${cx},${cy})`)
-            .attr("fill", (d) => d.fill)
-            .attr("stroke", (d) => d.stroke)
-            .attr("stroke-width", 1.5)
-            .attr("d", (d) => d.arc({ startAngle, endAngle: startAngle })) // start at 0 length
-            .on("mousemove", handleTooltip)
-            .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })))
-            .call((enter) =>
-              enter
-                .transition()
-                .duration(1100)
-                .ease(d3.easeCubicOut)
-                .attrTween("d", function (d) {
-                  const i = d3.interpolate(0, d.value);
-                  return (t) => d.arc({ startAngle, endAngle: startAngle + scale(i(t)) });
-                })
-            ),
-        (update) =>
-          update
-            .attr("transform", `translate(${cx},${cy})`)
-            .on("mousemove", handleTooltip)
-            .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })))
-            .transition()
-            .duration(700)
-            .ease(d3.easeCubicInOut)
-            .attr("d", (d) => d.arc({ startAngle, endAngle: startAngle + scale(d.value) })),
-        (exit) => exit.remove()
-      );
+    arcs.join(
+      (enter) =>
+        enter
+          .append("path")
+          .attr("class", "arc")
+          .attr("transform", `translate(${cx},${cy})`)
+          .attr("fill", (d) => d.fill)
+          .attr("stroke", (d) => d.stroke)
+          .attr("stroke-width", 1.5)
+          .attr("d", (d) => d.arc({ startAngle, endAngle: startAngle })) // start at 0 length
+          .on("mousemove", handleTooltip)
+          .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })))
+          .call((enter) =>
+            enter
+              .transition()
+              .duration(1100)
+              .ease(d3.easeCubicOut)
+              .attrTween("d", function (d) {
+                const i = d3.interpolate(0, d.value);
+                return (t) =>
+                  d.arc({ startAngle, endAngle: startAngle + scale(i(t)) });
+              })
+          ),
+      (update) =>
+        update
+          .attr("transform", `translate(${cx},${cy})`)
+          .on("mousemove", handleTooltip)
+          .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })))
+          .transition()
+          .duration(700)
+          .ease(d3.easeCubicInOut)
+          .attr("d", (d) =>
+            d.arc({ startAngle, endAngle: startAngle + scale(d.value) })
+          ),
+      (exit) => exit.remove()
+    );
 
     // TITLE
     svg
@@ -631,7 +673,9 @@ export function ConcentricRadialGauges({
       .text(title);
 
     // CENTER LABELS
-    const center = g.select("g.center").attr("transform", `translate(${cx},${cy})`);
+    const center = g
+      .select("g.center")
+      .attr("transform", `translate(${cx},${cy})`);
     const centerTop = center.selectAll("text.center-title").data([0]);
     centerTop
       .join("text")
@@ -642,7 +686,9 @@ export function ConcentricRadialGauges({
       .style("font-weight", 600)
       .text("Shortfall");
 
-    const centerNum = center.selectAll("text.center-num").data([`${basicVal}% / ${advVal}%`]);
+    const centerNum = center
+      .selectAll("text.center-num")
+      .data([`${basicVal}% / ${advVal}%`]);
     centerNum
       .join("text")
       .attr("class", "center-num")
@@ -660,21 +706,28 @@ export function ConcentricRadialGauges({
       { label: `Advanced: ${advVal}%`, color: colors.pink },
     ];
     const li = legend.selectAll("g.item").data(items);
-    li
-      .join(
-        (enter) => {
-          const e = enter.append("g").attr("class", "item");
-          e.append("rect");
-          e.append("text");
-          return e;
-        },
-        (update) => update,
-        (exit) => exit.remove()
+    li.join(
+      (enter) => {
+        const e = enter.append("g").attr("class", "item");
+        e.append("rect");
+        e.append("text");
+        return e;
+      },
+      (update) => update,
+      (exit) => exit.remove()
+    )
+      .attr(
+        "transform",
+        (_d, i) => `translate(${cx - 120 + i * 140}, ${innerH - 10})`
       )
-      .attr("transform", (_d, i) => `translate(${cx - 120 + i * 140}, ${innerH - 10})`)
       .each(function (d) {
         const node = d3.select(this);
-        node.select("rect").attr("width", 14).attr("height", 14).attr("rx", 3).attr("fill", d.color);
+        node
+          .select("rect")
+          .attr("width", 14)
+          .attr("height", 14)
+          .attr("rx", 3)
+          .attr("fill", d.color);
         node
           .select("text")
           .attr("x", 20)
@@ -719,7 +772,10 @@ export function ConcentricRadialGauges({
           </linearGradient>
         </defs>
         <text className="chart-title" />
-        <g className="inner" transform={`translate(${margin.left},${margin.top})`}>
+        <g
+          className="inner"
+          transform={`translate(${margin.left},${margin.top})`}
+        >
           <g className="tracks" />
           <g className="arcs" />
           <g className="center" />
