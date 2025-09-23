@@ -534,7 +534,7 @@ export function ConcentricRadialGauges({
   advanced = 27,
   width = 520,
   height = 420,
-  margin = { top: 40, right: 24, bottom: 28, left: 24 }, // extra top space for title
+  margin = { top: 40, right: 24, bottom: 28, left: 24 },
   title = "Skills shortfall (2024)",
 }) {
   const svgRef = useRef(null);
@@ -543,7 +543,6 @@ export function ConcentricRadialGauges({
   const innerW = width - margin.left - margin.right;
   const innerH = height - margin.top - margin.bottom;
 
-  // Light theme (memoized to avoid ESLint dependency churn)
   const colors = useMemo(
     () => ({
       bg: "#ffffff",
@@ -557,33 +556,39 @@ export function ConcentricRadialGauges({
     []
   );
 
-  // Ring geometry
   const cx = innerW / 2;
-  const cy = innerH / 2 + 10; // slight nudge down
+  const cy = innerH / 2 + 10;
+
   const rings = useMemo(() => {
     const R = Math.min(innerW, innerH) / 2;
     return {
-      outer: { r0: R - 36, r1: R - 12 }, // thickness 24
+      outer: { r0: R - 36, r1: R - 12 },
       inner: { r0: R - 72, r1: R - 48 },
     };
   }, [innerW, innerH]);
 
-  // Clamp values
   const basicVal = Math.max(0, Math.min(100, +basic || 0));
   const advVal = Math.max(0, Math.min(100, +advanced || 0));
 
-  // Arc helpers
-  const startAngle = -Math.PI / 2;
-  const toAngle = d3.scaleLinear().domain([0, 100]).range([0, 2 * Math.PI]);
-  const arcOuter = d3.arc().innerRadius(rings.outer.r0).outerRadius(rings.outer.r1).cornerRadius(12);
-  const arcInner = d3.arc().innerRadius(rings.inner.r0).outerRadius(rings.inner.r1).cornerRadius(12);
+  const startAngle = useMemo(() => -Math.PI / 2, []);
+  const toAngle = useMemo(
+    () => d3.scaleLinear().domain([0, 100]).range([0, 2 * Math.PI]),
+    []
+  );
+  const arcOuter = useMemo(
+    () => d3.arc().innerRadius(rings.outer.r0).outerRadius(rings.outer.r1).cornerRadius(12),
+    [rings]
+  );
+  const arcInner = useMemo(
+    () => d3.arc().innerRadius(rings.inner.r0).outerRadius(rings.inner.r1).cornerRadius(12),
+    [rings]
+  );
 
   useEffect(() => {
     const svg = d3.select(svgRef.current);
     svg.attr("role", "img").attr("aria-label", title).attr("viewBox", `0 0 ${width} ${height}`);
     svg.select("rect.bg").attr("width", width).attr("height", height).attr("fill", colors.bg);
 
-    // Title (with breathing room above rings)
     svg
       .select("text.chart-title")
       .attr("x", width / 2)
@@ -596,7 +601,6 @@ export function ConcentricRadialGauges({
 
     const g = svg.select("g.inner").attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // TRACKS (background rings)
     const tracks = [
       { key: "outer", arc: arcOuter, thickness: rings.outer.r1 - rings.outer.r0 },
       { key: "inner", arc: arcInner, thickness: rings.inner.r1 - rings.inner.r0 },
@@ -613,10 +617,9 @@ export function ConcentricRadialGauges({
       .attr("stroke-width", (d) => d.thickness)
       .attr("d", (d) => d.arc({ startAngle, endAngle: startAngle + toAngle(100) }));
 
-    // ACTIVE ARCS (no animation)
     const arcsData = [
-      { key: "basic",   value: basicVal, arc: arcOuter, fill: "url(#gradOuter)", stroke: colors.purple, ring: "outer" },
-      { key: "advanced", value: advVal,  arc: arcInner, fill: "url(#gradInner)", stroke: colors.pink,   ring: "inner" },
+      { key: "basic", value: basicVal, arc: arcOuter, fill: "url(#gradOuter)", stroke: colors.purple },
+      { key: "advanced", value: advVal, arc: arcInner, fill: "url(#gradInner)", stroke: colors.pink },
     ];
     const arcsG = g.select("g.arcs");
     arcsG
@@ -632,15 +635,15 @@ export function ConcentricRadialGauges({
       .on("mousemove", (event, d) => {
         const [mx, my] = d3.pointer(event, svg.node());
         const label = d.key === "basic" ? "Basic shortfall" : "Advanced shortfall";
-        // clamp tooltip within the card
-        const pad = 12, tipW = 200, tipH = 48;
+        const pad = 12,
+          tipW = 200,
+          tipH = 48;
         const tx = Math.max(pad, Math.min(mx + 12, width - tipW - pad));
         const ty = Math.max(pad, Math.min(my + 12, height - tipH - pad));
         setTooltip({ show: true, x: tx, y: ty, html: `<strong>${label}</strong><br/>${d.value}%` });
       })
       .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })));
 
-    // CENTER TEXT
     const center = g.select("g.center").attr("transform", `translate(${cx},${cy})`);
     center
       .selectAll("text.center-title")
@@ -665,7 +668,6 @@ export function ConcentricRadialGauges({
       .style("font-size", 22)
       .text((d) => d);
 
-    // LEGEND (bottom center)
     const legend = g.select("g.legend");
     const items = [
       { label: `Basic: ${basicVal}%`, color: colors.purple },
@@ -692,7 +694,24 @@ export function ConcentricRadialGauges({
           .text(d.label);
       });
     li.exit().remove();
-  }, [width, height, margin, innerW, innerH, cx, cy, rings, basicVal, advVal, colors, title]);
+  }, [
+    width,
+    height,
+    margin,
+    innerW,
+    innerH,
+    cx,
+    cy,
+    rings,
+    basicVal,
+    advVal,
+    colors,
+    title,
+    startAngle,
+    toAngle,
+    arcOuter,
+    arcInner,
+  ]);
 
   return (
     <div
@@ -710,12 +729,10 @@ export function ConcentricRadialGauges({
       <svg ref={svgRef} width={width} height={height} style={{ display: "block" }}>
         <rect className="bg" />
         <defs>
-          {/* Outer ring gradient (purple) */}
           <linearGradient id="gradOuter" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#cfd6ff" />
             <stop offset="100%" stopColor="#6f7ce8" />
           </linearGradient>
-          {/* Inner ring gradient (pink) */}
           <linearGradient id="gradInner" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#ffb3e7" />
             <stop offset="100%" stopColor="#ff6ad5" />
@@ -730,7 +747,6 @@ export function ConcentricRadialGauges({
         </g>
       </svg>
 
-      {/* Tooltip (light theme, clamped) */}
       {tooltip.show && (
         <div
           style={{
