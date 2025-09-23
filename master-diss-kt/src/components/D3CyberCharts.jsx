@@ -43,189 +43,244 @@ const ChartFrame = ({ title, subtitle, height = 360, children }) => (
   </section>
 );
 
-export function BreachImpactFunnel({
+export function BreachImpactBars({
   data = [
-    { label: "All orgs", value: 100 },
+    { label: "All orgs (baseline)", value: 100 },
     { label: "Breached", value: 87 },
     { label: ">£1M loss", value: 53 },
     { label: "Leaders penalised", value: 51 },
   ],
-  width = 480,
-  height = 300,
-  margin = { top: 36, right: 20, bottom: 28, left: 20 },
-  title = "Breach Impact Funnel",
-  desc = "100% baseline → 87% breached → 53% with >£1M losses → 51% leaders penalised.",
+  width = 720,
+  height = 300, // auto-sizes a bit via band padding; tweak as needed
+  margin = { top: 48, right: 28, bottom: 40, left: 180 },
+  title = "Breach impact snapshot",
+  subtitle = "Share of organisations (%)",
 }) {
-  const svgRef = useRef(null);
-  const [tooltip, setTooltip] = useState({ show: false, x: 0, y: 0, html: "" });
+  const svgRef = React.useRef(null);
+  const [tooltip, setTooltip] = React.useState({ show: false, x: 0, y: 0, html: "" });
 
-  // prepare data (clamped & non-increasing)
-  const stages = useMemo(() => {
-    const clean = data.map((d, i) => ({
-      ...d,
-      value: Math.max(0, Math.min(100, +d.value || 0)),
-      idx: i,
-    }));
-    for (let i = 1; i < clean.length; i++) {
-      clean[i].value = Math.min(clean[i].value, clean[i - 1].value);
-    }
-    return clean;
-  }, [data]);
+  // Light theme tokens (memoized to keep ESLint happy)
+  const C = React.useMemo(
+    () => ({
+      bg: "#ffffff",
+      ink: "#1f2544",
+      muted: "#4b4f6b",
+      grid: "#e9ebf5",
+      purple: "#6f7ce8",
+      pink: "#ff6ad5",
+    }),
+    []
+  );
 
-  useEffect(() => {
-    const innerW = Math.max(10, width - margin.left - margin.right);
-    const innerH = Math.max(10, height - margin.top - margin.bottom);
+  // Sanitise values
+  const rows = React.useMemo(
+    () =>
+      data.map((d, i) => ({
+        label: d.label,
+        value: Math.max(0, Math.min(100, +d.value || 0)),
+        i,
+      })),
+    [data]
+  );
 
+  // Layout + scales
+  const innerW = width - margin.left - margin.right;
+  const innerH = height - margin.top - margin.bottom;
+  const y = React.useMemo(
+    () => d3.scaleBand().domain(rows.map((d) => d.label)).range([0, innerH]).padding(0.35),
+    [rows, innerH]
+  );
+  const x = React.useMemo(() => d3.scaleLinear().domain([0, 100]).range([0, innerW]).nice(), [innerW]);
+
+  React.useEffect(() => {
     const svg = d3.select(svgRef.current);
-    // clean slate on every render (prevents “stacked text”)
-    svg.selectAll("*").remove();
+    svg.attr("role", "img").attr("aria-label", title).attr("viewBox", `0 0 ${width} ${height}`);
+    svg.select("rect.bg").attr("width", width).attr("height", height).attr("fill", C.bg);
 
-    // structure
+    // Title
     svg
-      .attr("width", width)
-      .attr("height", height)
-      .attr("role", "img")
-      .attr("aria-label", title);
-
-    svg.append("desc").text(desc);
-    svg
-      .append("rect")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("fill", "#0b0b12");
-
-    const g = svg
-      .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
-
-    // scales
-    const x = d3.scaleLinear().domain([0, 100]).range([0, innerW]);
-    const y = d3
-      .scalePoint()
-      .domain(d3.range(stages.length))
-      .range([0, innerH])
-      .padding(0.8);
-
-    // segments
-    const segments = [];
-    const cx = innerW / 2;
-    for (let i = 0; i < stages.length - 1; i++) {
-      const top = stages[i];
-      const bot = stages[i + 1];
-      const y1 = y(i);
-      const y2 = y(i + 1);
-      const w1 = x(top.value);
-      const w2 = x(bot.value);
-      const x1L = cx - w1 / 2;
-      const x1R = cx + w1 / 2;
-      const x2L = cx - w2 / 2;
-      const x2R = cx + w2 / 2;
-      const r = Math.min(12, Math.abs(w1 - w2) / 4);
-      const path = `M ${x1L} ${y1}
-        L ${x1R} ${y1}
-        C ${x1R} ${y1 + r} ${x2R} ${y2 - r} ${x2R} ${y2}
-        L ${x2L} ${y2}
-        C ${x2L} ${y2 - r} ${x1L} ${y1 + r} ${x1L} ${y1}
-        Z`;
-      segments.push({ i, path, top, bot });
-    }
-
-    const color = d3
-      .scaleLinear()
-      .domain([0, Math.max(1, segments.length - 1)])
-      .range(["#5AA9FF", "#FF6AD5"])
-      .interpolate(d3.interpolateHcl);
-
-    // grid lines
-    g.append("g")
-      .selectAll("line")
-      .data(stages.map((_, i) => y(i)))
-      .enter()
-      .append("line")
-      .attr("x1", 0)
-      .attr("x2", innerW)
-      .attr("y1", (d) => d)
-      .attr("y2", (d) => d)
-      .attr("stroke", "#2a2e3a");
-
-    // segments
-    g.append("g")
-      .selectAll("path.segment")
-      .data(segments)
-      .enter()
-      .append("path")
-      .attr("class", "segment")
-      .attr("d", (d) => d.path)
-      .attr("fill", (d) => color(d.i))
-      .attr("opacity", 0.9)
-      .on("mousemove", function (event, d) {
-        const [mx, my] = d3.pointer(event, this.ownerSVGElement);
-        setTooltip({
-          show: true,
-          x: mx + 12,
-          y: my + 12,
-          html: `<strong>${d.top.label} → ${d.bot.label}</strong><br/>${d.bot.value}% remain`,
-        });
-      })
-      .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })));
-
-    // labels
-    const labelG = g.append("g");
-    const cxLabel = innerW / 2;
-    stages.forEach((s, i) => {
-      const yPos = y(i);
-      labelG
-        .append("text")
-        .attr("x", cxLabel)
-        .attr("y", yPos - 14)
-        .attr("text-anchor", "middle")
-        .style("font-weight", i === 0 ? 700 : 600)
-        .style("fill", "#eae7ff")
-        .text(s.label);
-
-      labelG
-        .append("text")
-        .attr("x", cxLabel)
-        .attr("y", yPos + 18)
-        .attr("text-anchor", "middle")
-        .style("fill", "#b7d7ff")
-        .text(d3.format(".0f")(s.value) + "%");
-    });
-
-    // title
-    svg
-      .append("text")
+      .select("text.chart-title")
       .attr("x", width / 2)
-      .attr("y", 24)
+      .attr("y", 26)
       .attr("text-anchor", "middle")
+      .style("fill", C.ink)
       .style("font-weight", 700)
       .style("font-size", 18)
-      .style("fill", "#eae7ff")
       .text(title);
-  }, [data, stages, width, height, margin, title, desc]);
+
+    // Subtitle (extra space below for breathing room)
+    svg
+      .select("text.chart-subtitle")
+      .attr("x", width / 2)
+      .attr("y", 46)
+      .attr("text-anchor", "middle")
+      .style("fill", C.muted)
+      .style("font-weight", 600)
+      .style("font-size", 12)
+      .text(subtitle);
+
+    const g = svg.select("g.inner").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // Grid (vertical) at 0–100 ticks
+    const gridTicks = x.ticks(5);
+    const grid = g.select("g.grid").selectAll("line.grid-x").data(gridTicks, (d) => d);
+    grid
+      .join(
+        (enter) =>
+          enter
+            .append("line")
+            .attr("class", "grid-x")
+            .attr("x1", (d) => x(d))
+            .attr("x2", (d) => x(d))
+            .attr("y1", 0)
+            .attr("y2", innerH)
+            .attr("stroke", C.grid),
+        (update) => update.attr("x1", (d) => x(d)).attr("x2", (d) => x(d)).attr("y2", innerH),
+        (exit) => exit.remove()
+      );
+
+    // Axes
+    const xAxis = d3.axisBottom(x).ticks(5).tickFormat((t) => `${t}%`);
+    const xAxisG = g.select("g.x-axis").attr("transform", `translate(0,${innerH})`).call(xAxis);
+    xAxisG.selectAll("path, line").attr("stroke", C.grid);
+    xAxisG.selectAll("text").attr("fill", C.muted).style("font-weight", 600);
+
+    const yAxis = d3.axisLeft(y);
+    const yAxisG = g.select("g.y-axis").call(yAxis);
+    yAxisG.selectAll("path, line").attr("stroke", "transparent");
+    yAxisG.selectAll("text").attr("fill", C.ink).style("font-weight", 600);
+
+    // Gradient for bars (purple → pink)
+    const defs = svg.select("defs.gradients");
+    defs
+      .selectAll("linearGradient.hbar")
+      .data([0])
+      .join((enter) =>
+        enter
+          .append("linearGradient")
+          .attr("class", "hbar")
+          .attr("id", "barGrad")
+          .attr("x1", "0%")
+          .attr("y1", "0%")
+          .attr("x2", "100%")
+          .attr("y2", "0%")
+          .call((lg) => {
+            lg.append("stop").attr("offset", "0%").attr("stop-color", "#cfd6ff");
+            lg.append("stop").attr("offset", "100%").attr("stop-color", C.pink);
+          })
+      );
+
+    // Bars
+    const bars = g.select("g.bars").selectAll("rect.bar").data(rows, (d) => d.label);
+    bars
+      .join(
+        (enter) =>
+          enter
+            .append("rect")
+            .attr("class", "bar")
+            .attr("x", 0)
+            .attr("y", (d) => y(d.label))
+            .attr("height", y.bandwidth())
+            .attr("width", (d) => x(d.value))
+            .attr("rx", 8)
+            .attr("fill", "url(#barGrad)")
+            .on("mousemove", function (event, d) {
+              const [mx, my] = d3.pointer(event, svg.node());
+              const tipW = 220,
+                tipH = 54,
+                pad = 10;
+              const tx = Math.max(pad, Math.min(mx + 12, width - tipW - pad));
+              const ty = Math.max(pad, Math.min(my + 12, height - tipH - pad));
+              setTooltip({
+                show: true,
+                x: tx,
+                y: ty,
+                html: `<strong>${d.label}</strong><br/>${d.value}%`,
+              });
+            })
+            .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false }))),
+        (update) =>
+          update
+            .attr("y", (d) => y(d.label))
+            .attr("height", y.bandwidth())
+            .attr("width", (d) => x(d.value)),
+        (exit) => exit.remove()
+      );
+
+    // Value labels at bar ends
+    const labels = g.select("g.values").selectAll("text.val").data(rows, (d) => d.label);
+    labels
+      .join(
+        (enter) =>
+          enter
+            .append("text")
+            .attr("class", "val")
+            .attr("x", (d) => x(d.value) + 8)
+            .attr("y", (d) => (y(d.label) ?? 0) + y.bandwidth() / 2)
+            .attr("dominant-baseline", "middle")
+            .style("fill", C.muted)
+            .style("font-weight", 700)
+            .text((d) => `${d.value}%`),
+        (update) =>
+          update
+            .attr("x", (d) => x(d.value) + 8)
+            .attr("y", (d) => (y(d.label) ?? 0) + y.bandwidth() / 2)
+            .text((d) => `${d.value}%`),
+        (exit) => exit.remove()
+      );
+  }, [rows, width, height, margin, innerW, innerH, x, y, C, title, subtitle]);
 
   return (
-    <div style={{ position: "relative", width }}>
-      <svg ref={svgRef} />
+    <div
+      style={{
+        position: "relative",
+        maxWidth: width,
+        margin: "2rem auto",
+        padding: 16,
+        background: "#fff",
+        borderRadius: 16,
+        boxShadow: "0 12px 28px rgba(24,33,95,0.12)",
+        border: "1px solid #e9ebf5",
+      }}
+    >
+      <svg ref={svgRef} width={width} height={height} style={{ display: "block" }}>
+        <rect className="bg" />
+        <defs className="gradients" />
+        <text className="chart-title" />
+        <text className="chart-subtitle" />
+        <g className="inner" transform={`translate(${margin.left},${margin.top})`}>
+          <g className="grid" />
+          <g className="bars" />
+          <g className="values" />
+          <g className="x-axis" />
+          <g className="y-axis" />
+        </g>
+      </svg>
+
+      {/* Light tooltip, clamped inside card */}
       {tooltip.show && (
         <div
           style={{
             position: "absolute",
             left: tooltip.x,
             top: tooltip.y,
-            background: "#11131a",
-            color: "#eae7ff",
-            border: "1px solid #2a2e3a",
-            borderRadius: 8,
+            background: "#fff",
+            color: "#1f2544",
+            border: "1px solid #e9ebf5",
+            borderRadius: 10,
             padding: "8px 10px",
             pointerEvents: "none",
-            boxShadow: "0 6px 18px rgba(0,0,0,0.35)",
-            fontSize: 12,
+            boxShadow: "0 10px 22px rgba(24,33,95,0.14)",
+            fontSize: 12.5,
             whiteSpace: "nowrap",
           }}
           dangerouslySetInnerHTML={{ __html: tooltip.html }}
         />
       )}
+
+      <style>{`
+        text { font-family: ui-sans-serif, system-ui, Inter, Segoe UI, Roboto; }
+      `}</style>
     </div>
   );
 }
@@ -475,11 +530,11 @@ export const SchoolReadinessStacked100 = () => {
   );
 };
 export function ConcentricRadialGauges({
-  basic = 44, // basic shortfall %
-  advanced = 27, // advanced shortfall %
+  basic = 44,
+  advanced = 27,
   width = 520,
   height = 420,
-  margin = { top: 24, right: 24, bottom: 24, left: 24 },
+  margin = { top: 40, right: 24, bottom: 28, left: 24 }, // extra top space for title
   title = "Skills shortfall (2024)",
 }) {
   const svgRef = useRef(null);
@@ -487,25 +542,24 @@ export function ConcentricRadialGauges({
 
   const innerW = width - margin.left - margin.right;
   const innerH = height - margin.top - margin.bottom;
-  const cx = innerW / 2;
-  const cy = innerH / 2 + 10; // nudge slightly down to balance title
 
-  // Theme tokens (kept inside component; include in deps since object identity changes)
+  // Light theme (memoized to avoid ESLint dependency churn)
   const colors = useMemo(
     () => ({
-      bg: "#0b0b12",
-      ink: "#eae7ff",
-      muted: "#9aa0b3",
-      grid: "#2a2e3a",
-      purple: "#A78BFA",
-      pink: "#FF6AD5",
-      track: "#2a2e3a",
-      accent: "#ffd166",
+      bg: "#ffffff",
+      ink: "#1f2544",
+      muted: "#4b4f6b",
+      grid: "#e9ebf5",
+      purple: "#6f7ce8",
+      pink: "#ff6ad5",
+      track: "#e9ebf5",
     }),
     []
   );
 
-  // radii for rings (recompute on size change)
+  // Ring geometry
+  const cx = innerW / 2;
+  const cy = innerH / 2 + 10; // slight nudge down
   const rings = useMemo(() => {
     const R = Math.min(innerW, innerH) / 2;
     return {
@@ -514,170 +568,83 @@ export function ConcentricRadialGauges({
     };
   }, [innerW, innerH]);
 
-  // clamp values
+  // Clamp values
   const basicVal = Math.max(0, Math.min(100, +basic || 0));
   const advVal = Math.max(0, Math.min(100, +advanced || 0));
 
-  // arc generators (safe to recreate each render)
-  const arcOuter = d3
-    .arc()
-    .innerRadius(rings.outer.r0)
-    .outerRadius(rings.outer.r1)
-    .cornerRadius(12);
-  const arcInner = d3
-    .arc()
-    .innerRadius(rings.inner.r0)
-    .outerRadius(rings.inner.r1)
-    .cornerRadius(12);
-
-  const startAngle = -Math.PI / 2; // 12 o'clock
-  const scale = d3
-    .scaleLinear()
-    .domain([0, 100])
-    .range([0, 2 * Math.PI]);
+  // Arc helpers
+  const startAngle = -Math.PI / 2;
+  const toAngle = d3.scaleLinear().domain([0, 100]).range([0, 2 * Math.PI]);
+  const arcOuter = d3.arc().innerRadius(rings.outer.r0).outerRadius(rings.outer.r1).cornerRadius(12);
+  const arcInner = d3.arc().innerRadius(rings.inner.r0).outerRadius(rings.inner.r1).cornerRadius(12);
 
   useEffect(() => {
     const svg = d3.select(svgRef.current);
+    svg.attr("role", "img").attr("aria-label", title).attr("viewBox", `0 0 ${width} ${height}`);
+    svg.select("rect.bg").attr("width", width).attr("height", height).attr("fill", colors.bg);
 
-    svg
-      .attr("role", "img")
-      .attr("aria-label", title)
-      .attr("viewBox", `0 0 ${width} ${height}`);
-
-    svg
-      .select("rect.bg")
-      .attr("width", width)
-      .attr("height", height)
-      .attr("fill", colors.bg);
-
-    const g = svg
-      .select("g.inner")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
-
-    // BACK TRACKS
-    const tracks = [
-      { key: "outer", arc: arcOuter, color: colors.track },
-      { key: "inner", arc: arcInner, color: colors.track },
-    ];
-    const trackG = g.select("g.tracks");
-    const tpaths = trackG.selectAll("path.track").data(tracks, (d) => d.key);
-    tpaths.join(
-      (enter) =>
-        enter
-          .append("path")
-          .attr("class", "track")
-          .attr("transform", `translate(${cx},${cy})`)
-          .attr("fill", "none")
-          .attr("stroke", (d) => d.color)
-          .attr("stroke-width", (d) =>
-            d.key === "outer"
-              ? rings.outer.r1 - rings.outer.r0
-              : rings.inner.r1 - rings.inner.r0
-          )
-          .attr("d", (d) =>
-            d.arc({ startAngle, endAngle: startAngle + scale(100) })
-          ),
-      (update) =>
-        update
-          .attr("transform", `translate(${cx},${cy})`)
-          .attr("stroke-width", (d) =>
-            d.key === "outer"
-              ? rings.outer.r1 - rings.outer.r0
-              : rings.inner.r1 - rings.inner.r0
-          )
-          .attr("d", (d) =>
-            d.arc({ startAngle, endAngle: startAngle + scale(100) })
-          ),
-      (exit) => exit.remove()
-    );
-
-    // ACTIVE ARCS
-    const arcsData = [
-      {
-        key: "basic",
-        value: basicVal,
-        arc: arcOuter,
-        stroke: colors.purple,
-        fill: "url(#gradOuter)",
-      },
-      {
-        key: "advanced",
-        value: advVal,
-        arc: arcInner,
-        stroke: colors.pink,
-        fill: "url(#gradInner)",
-      },
-    ];
-
-    const arcsG = g.select("g.arcs");
-    const arcs = arcsG.selectAll("path.arc").data(arcsData, (d) => d.key);
-
-    const handleTooltip = (event, d) => {
-      const [mx, my] = d3.pointer(event, svg.node());
-      setTooltip({
-        show: true,
-        x: mx + 12,
-        y: my + 12,
-        html: `<strong>${
-          d.key === "basic" ? "Basic shortfall" : "Advanced shortfall"
-        }</strong><br/>${d.value}%`,
-      });
-    };
-
-    arcs.join(
-      (enter) =>
-        enter
-          .append("path")
-          .attr("class", "arc")
-          .attr("transform", `translate(${cx},${cy})`)
-          .attr("fill", (d) => d.fill)
-          .attr("stroke", (d) => d.stroke)
-          .attr("stroke-width", 1.5)
-          .attr("d", (d) => d.arc({ startAngle, endAngle: startAngle })) // start at 0 length
-          .on("mousemove", handleTooltip)
-          .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })))
-          .call((enter) =>
-            enter
-              .transition()
-              .duration(1100)
-              .ease(d3.easeCubicOut)
-              .attrTween("d", function (d) {
-                const i = d3.interpolate(0, d.value);
-                return (t) =>
-                  d.arc({ startAngle, endAngle: startAngle + scale(i(t)) });
-              })
-          ),
-      (update) =>
-        update
-          .attr("transform", `translate(${cx},${cy})`)
-          .on("mousemove", handleTooltip)
-          .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })))
-          .transition()
-          .duration(700)
-          .ease(d3.easeCubicInOut)
-          .attr("d", (d) =>
-            d.arc({ startAngle, endAngle: startAngle + scale(d.value) })
-          ),
-      (exit) => exit.remove()
-    );
-
-    // TITLE
+    // Title (with breathing room above rings)
     svg
       .select("text.chart-title")
       .attr("x", width / 2)
-      .attr("y", 30)
+      .attr("y", 28)
       .attr("text-anchor", "middle")
       .style("fill", colors.ink)
       .style("font-weight", 700)
       .style("font-size", 18)
       .text(title);
 
-    // CENTER LABELS
-    const center = g
-      .select("g.center")
-      .attr("transform", `translate(${cx},${cy})`);
-    const centerTop = center.selectAll("text.center-title").data([0]);
-    centerTop
+    const g = svg.select("g.inner").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // TRACKS (background rings)
+    const tracks = [
+      { key: "outer", arc: arcOuter, thickness: rings.outer.r1 - rings.outer.r0 },
+      { key: "inner", arc: arcInner, thickness: rings.inner.r1 - rings.inner.r0 },
+    ];
+    const trackG = g.select("g.tracks");
+    trackG
+      .selectAll("path.track")
+      .data(tracks, (d) => d.key)
+      .join("path")
+      .attr("class", "track")
+      .attr("transform", `translate(${cx},${cy})`)
+      .attr("fill", "none")
+      .attr("stroke", colors.track)
+      .attr("stroke-width", (d) => d.thickness)
+      .attr("d", (d) => d.arc({ startAngle, endAngle: startAngle + toAngle(100) }));
+
+    // ACTIVE ARCS (no animation)
+    const arcsData = [
+      { key: "basic",   value: basicVal, arc: arcOuter, fill: "url(#gradOuter)", stroke: colors.purple, ring: "outer" },
+      { key: "advanced", value: advVal,  arc: arcInner, fill: "url(#gradInner)", stroke: colors.pink,   ring: "inner" },
+    ];
+    const arcsG = g.select("g.arcs");
+    arcsG
+      .selectAll("path.arc")
+      .data(arcsData, (d) => d.key)
+      .join("path")
+      .attr("class", "arc")
+      .attr("transform", `translate(${cx},${cy})`)
+      .attr("fill", (d) => d.fill)
+      .attr("stroke", (d) => d.stroke)
+      .attr("stroke-width", 1)
+      .attr("d", (d) => d.arc({ startAngle, endAngle: startAngle + toAngle(d.value) }))
+      .on("mousemove", (event, d) => {
+        const [mx, my] = d3.pointer(event, svg.node());
+        const label = d.key === "basic" ? "Basic shortfall" : "Advanced shortfall";
+        // clamp tooltip within the card
+        const pad = 12, tipW = 200, tipH = 48;
+        const tx = Math.max(pad, Math.min(mx + 12, width - tipW - pad));
+        const ty = Math.max(pad, Math.min(my + 12, height - tipH - pad));
+        setTooltip({ show: true, x: tx, y: ty, html: `<strong>${label}</strong><br/>${d.value}%` });
+      })
+      .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })));
+
+    // CENTER TEXT
+    const center = g.select("g.center").attr("transform", `translate(${cx},${cy})`);
+    center
+      .selectAll("text.center-title")
+      .data([0])
       .join("text")
       .attr("class", "center-title")
       .attr("text-anchor", "middle")
@@ -686,10 +653,9 @@ export function ConcentricRadialGauges({
       .style("font-weight", 600)
       .text("Shortfall");
 
-    const centerNum = center
+    center
       .selectAll("text.center-num")
-      .data([`${basicVal}% / ${advVal}%`]);
-    centerNum
+      .data([`${basicVal}% / ${advVal}%`])
       .join("text")
       .attr("class", "center-num")
       .attr("text-anchor", "middle")
@@ -699,35 +665,24 @@ export function ConcentricRadialGauges({
       .style("font-size", 22)
       .text((d) => d);
 
-    // LEGEND
+    // LEGEND (bottom center)
     const legend = g.select("g.legend");
     const items = [
       { label: `Basic: ${basicVal}%`, color: colors.purple },
       { label: `Advanced: ${advVal}%`, color: colors.pink },
     ];
+    const legendY = innerH - 6;
+    const legendX = cx - 120;
     const li = legend.selectAll("g.item").data(items);
-    li.join(
-      (enter) => {
-        const e = enter.append("g").attr("class", "item");
-        e.append("rect");
-        e.append("text");
-        return e;
-      },
-      (update) => update,
-      (exit) => exit.remove()
-    )
-      .attr(
-        "transform",
-        (_d, i) => `translate(${cx - 120 + i * 140}, ${innerH - 10})`
-      )
+    const liEnter = li.enter().append("g").attr("class", "item");
+    liEnter.append("rect");
+    liEnter.append("text");
+    li
+      .merge(liEnter)
+      .attr("transform", (_d, i) => `translate(${legendX + i * 160}, ${legendY})`)
       .each(function (d) {
         const node = d3.select(this);
-        node
-          .select("rect")
-          .attr("width", 14)
-          .attr("height", 14)
-          .attr("rx", 3)
-          .attr("fill", d.color);
+        node.select("rect").attr("width", 14).attr("height", 14).attr("rx", 3).attr("fill", d.color);
         node
           .select("text")
           .attr("x", 20)
@@ -736,46 +691,38 @@ export function ConcentricRadialGauges({
           .style("font-weight", 600)
           .text(d.label);
       });
-  }, [
-    basicVal,
-    advVal,
-    width,
-    height,
-    margin,
-    cx,
-    cy,
-    innerW,
-    innerH,
-    rings,
-    title,
-    colors,
-    arcOuter,
-    arcInner,
-    startAngle,
-    scale,
-  ]);
+    li.exit().remove();
+  }, [width, height, margin, innerW, innerH, cx, cy, rings, basicVal, advVal, colors, title]);
 
   return (
-    <div style={{ position: "relative", maxWidth: width }}>
-      <svg ref={svgRef} width={width} height={height}>
+    <div
+      style={{
+        position: "relative",
+        maxWidth: width,
+        margin: "2rem auto",
+        padding: "16px",
+        background: "#fff",
+        borderRadius: 16,
+        boxShadow: "0 12px 28px rgba(24,33,95,0.12)",
+        border: "1px solid #e9ebf5",
+      }}
+    >
+      <svg ref={svgRef} width={width} height={height} style={{ display: "block" }}>
         <rect className="bg" />
         <defs>
           {/* Outer ring gradient (purple) */}
           <linearGradient id="gradOuter" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#d5c9ff" />
-            <stop offset="100%" stopColor="#A78BFA" />
+            <stop offset="0%" stopColor="#cfd6ff" />
+            <stop offset="100%" stopColor="#6f7ce8" />
           </linearGradient>
           {/* Inner ring gradient (pink) */}
           <linearGradient id="gradInner" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stopColor="#ffb3e7" />
-            <stop offset="100%" stopColor="#FF6AD5" />
+            <stop offset="100%" stopColor="#ff6ad5" />
           </linearGradient>
         </defs>
         <text className="chart-title" />
-        <g
-          className="inner"
-          transform={`translate(${margin.left},${margin.top})`}
-        >
+        <g className="inner" transform={`translate(${margin.left},${margin.top})`}>
           <g className="tracks" />
           <g className="arcs" />
           <g className="center" />
@@ -783,26 +730,31 @@ export function ConcentricRadialGauges({
         </g>
       </svg>
 
-      {/* Tooltip */}
+      {/* Tooltip (light theme, clamped) */}
       {tooltip.show && (
         <div
           style={{
             position: "absolute",
             left: tooltip.x,
             top: tooltip.y,
-            background: "#11131a",
-            color: "#eae7ff",
-            border: "1px solid #2a2e3a",
-            borderRadius: 8,
+            background: "#fff",
+            color: "#1f2544",
+            border: "1px solid #e9ebf5",
+            borderRadius: 10,
             padding: "8px 10px",
             pointerEvents: "none",
-            boxShadow: "0 6px 18px rgba(0,0,0,0.35)",
-            fontSize: 12,
+            boxShadow: "0 10px 22px rgba(24,33,95,0.14)",
+            fontSize: 12.5,
             whiteSpace: "nowrap",
+            maxWidth: 220,
           }}
           dangerouslySetInnerHTML={{ __html: tooltip.html }}
         />
       )}
+
+      <style>{`
+        text { font-family: ui-sans-serif, system-ui, Inter, Segoe UI, Roboto; }
+      `}</style>
     </div>
   );
 }
@@ -823,7 +775,6 @@ export function DumbbellParity({
   const innerW = width - margin.left - margin.right;
   const innerH = height - margin.top - margin.bottom;
 
-  // Clean + clamp values to [0, 100]; we render within 0–50 domain.
   const rows = useMemo(
     () => data.map((d, i) => ({ label: d.label, value: Math.max(0, Math.min(100, +d.value || 0)), i })),
     [data]
@@ -835,24 +786,22 @@ export function DumbbellParity({
     [rows, innerH]
   );
 
+  // Light theme
   const colors = useMemo(
     () => ({
-      bg: "#0b0b12",
-      ink: "#eae7ff",
-      muted: "#9aa0b3",
-      grid: "#2a2e3a",
-      purple: "#A78BFA",
-      pink: "#FF6AD5",
+      bg: "#ffffff",
+      ink: "#1f2544",
+      muted: "#4b4f6b",
+      grid: "#e9ebf5",
+      purple: "#6f7ce8",
+      pink: "#ff6ad5",
     }),
     []
   );
 
   useEffect(() => {
     const svg = d3.select(svgRef.current);
-    svg
-      .attr("role", "img")
-      .attr("aria-label", title)
-      .attr("viewBox", `0 0 ${width} ${height}`);
+    svg.attr("role", "img").attr("aria-label", title).attr("viewBox", `0 0 ${width} ${height}`);
 
     // background
     svg.select("rect.bg").attr("width", width).attr("height", height).attr("fill", colors.bg);
@@ -883,15 +832,11 @@ export function DumbbellParity({
             .attr("y2", innerH)
             .attr("stroke", colors.grid),
         (update) =>
-          update
-            .attr("x1", (d) => x(d))
-            .attr("x2", (d) => x(d))
-            .attr("y2", innerH)
-            .attr("stroke", colors.grid),
+          update.attr("x1", (d) => x(d)).attr("x2", (d) => x(d)).attr("y2", innerH).attr("stroke", colors.grid),
         (exit) => exit.remove()
       );
 
-    // Gradients per row (fade purple to pink toward target)
+    // Gradients per row (fade purple → pink toward target)
     const defs = svg.select("defs.gradients");
     defs
       .selectAll("linearGradient.rowGrad")
@@ -929,19 +874,12 @@ export function DumbbellParity({
             .attr("y1", (d) => y(d.label))
             .attr("y2", (d) => y(d.label))
             .attr("x1", (d) => x(Math.min(d.value, 50)))
-            .attr("x2", (d) => x(Math.min(d.value, 50)))
+            .attr("x2", (d) => x(50))
             .attr("stroke", (d) => `url(#rowGrad-${d.i})`)
             .attr("stroke-width", 8)
-            .attr("stroke-linecap", "round")
-            .transition()
-            .duration(900)
-            .ease(d3.easeCubicOut)
-            .attr("x2", x(50)),
+            .attr("stroke-linecap", "round"),
         (update) =>
           update
-            .transition()
-            .duration(650)
-            .ease(d3.easeCubicInOut)
             .attr("y1", (d) => y(d.label))
             .attr("y2", (d) => y(d.label))
             .attr("x1", (d) => x(Math.min(d.value, 50)))
@@ -962,7 +900,7 @@ export function DumbbellParity({
             .attr("cx", (d) => x(Math.min(d.value, 50)))
             .attr("cy", (d) => y(d.label))
             .attr("fill", colors.purple)
-            .style("filter", "drop-shadow(0 2px 6px rgba(0,0,0,.35))")
+            .style("filter", "drop-shadow(0 2px 6px rgba(0,0,0,.15))")
             .on("mousemove", function (event, d) {
               const [mx, my] = d3.pointer(event, svg.node());
               const gap = 50 - Math.min(d.value, 50);
@@ -970,17 +908,10 @@ export function DumbbellParity({
                 show: true,
                 x: mx + 12,
                 y: my + 12,
-                html: `<strong>${d.label}</strong><br/>Current: ${d.value}%<br/>Gap to parity: ${d3.format(".0f")(
-                  gap
-                )}pp`,
+                html: `<strong>${d.label}</strong><br/>Current: ${d.value}%<br/>Gap to parity: ${d3.format(".0f")(gap)}pp`,
               });
             })
-            .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })))
-            .attr("opacity", 0)
-            .transition()
-            .delay(200)
-            .duration(600)
-            .attr("opacity", 1),
+            .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false }))),
         (update) =>
           update
             .on("mousemove", function (event, d) {
@@ -990,14 +921,10 @@ export function DumbbellParity({
                 show: true,
                 x: mx + 12,
                 y: my + 12,
-                html: `<strong>${d.label}</strong><br/>Current: ${d.value}%<br/>Gap to parity: ${d3.format(".0f")(
-                  gap
-                )}pp`,
+                html: `<strong>${d.label}</strong><br/>Current: ${d.value}%<br/>Gap to parity: ${d3.format(".0f")(gap)}pp`,
               });
             })
             .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })))
-            .transition()
-            .duration(600)
             .attr("cx", (d) => x(Math.min(d.value, 50)))
             .attr("cy", (d) => y(d.label)),
         (exit) => exit.remove()
@@ -1062,11 +989,7 @@ export function DumbbellParity({
             .style("fill", colors.ink)
             .style("font-weight", 600)
             .text((d) => d.label),
-        (update) =>
-          update
-            .transition()
-            .duration(400)
-            .attr("y", (d) => y(d.label)),
+        (update) => update.attr("y", (d) => y(d.label)),
         (exit) => exit.remove()
       );
 
@@ -1093,8 +1016,19 @@ export function DumbbellParity({
   }, [rows, width, height, margin, innerW, innerH, x, y, colors, title, subtitle]);
 
   return (
-    <div style={{ position: "relative", maxWidth: width }}>
-      <svg ref={svgRef} width={width} height={height}>
+    <div
+      style={{
+        position: "relative",
+        maxWidth: width,
+        margin: "2rem auto",
+        padding: "16px",
+        background: "#fff",
+        borderRadius: 16,
+        boxShadow: "0 12px 28px rgba(24,33,95,0.12)",
+        border: "1px solid #e9ebf5",
+      }}
+    >
+      <svg ref={svgRef} width={width} height={height} style={{ display: "block" }}>
         <rect className="bg" />
         <defs className="gradients" />
         <text className="chart-title" />
@@ -1107,20 +1041,20 @@ export function DumbbellParity({
         </g>
       </svg>
 
-      {/* Tooltip */}
+      {/* Tooltip (light theme) */}
       {tooltip.show && (
         <div
           style={{
             position: "absolute",
             left: tooltip.x,
             top: tooltip.y,
-            background: "#11131a",
-            color: "#eae7ff",
-            border: "1px solid #2a2e3a",
-            borderRadius: 8,
+            background: "#fff",
+            color: "#1f2544",
+            border: "1px solid #e9ebf5",
+            borderRadius: 10,
             padding: "8px 10px",
             pointerEvents: "none",
-            boxShadow: "0 6px 18px rgba(0,0,0,0.35)",
+            boxShadow: "0 10px 22px rgba(24,33,95,0.14)",
             fontSize: 12,
             whiteSpace: "nowrap",
           }}
@@ -1137,220 +1071,182 @@ export function TriptychRadialBadges({
     { label: "Illegal activity", value: 20, detail: "~1 in 5 aged 10–16 engage in illegal online activity" },
   ],
   width = 840,
-  height = 320,
-  margin = { top: 32, right: 24, bottom: 36, left: 24 },
+  height = 360,
+  margin = { top: 36, right: 24, bottom: 36, left: 24 },
   title = "Student-driven risk snapshot",
   subtitle = "Schools & youth cyber context",
 }) {
   const svgRef = useRef(null);
   const [tooltip, setTooltip] = useState({ show: false, x: 0, y: 0, html: "" });
 
-  
-  const colors = useMemo(
-    () => ({
-      bg: "#0b0b12",
-      ink: "#eae7ff",
-      muted: "#9aa0b3",
-      grid: "#2a2e3a",
-      blue: "#5AA9FF",
-      purple: "#A78BFA",
-      pink: "#FF6AD5",
-      track: "#2a2e3a",
-    }),
-    []
-  );
+  // Light theme
+  const C = {
+    bg: "#ffffff",
+    ink: "#1f2544",
+    muted: "#4b4f6b",
+    blue: "#5aa9ff",
+    purple: "#6f7ce8",
+    pink: "#ff6ad5",
+    track: "#e9ebf5",
+  };
 
-  // Layout
   const innerW = width - margin.left - margin.right;
   const innerH = height - margin.top - margin.bottom;
+
   const cols = items.length;
-  const cellW = innerW / Math.max(1, cols);
-  const r = Math.min(cellW, innerH) / 2 - 12; // radius minus padding
+  const cellW = innerW / cols;
+  const r = Math.min(cellW, innerH) / 2 - 20; // smaller radius to create more space
   const thickness = Math.max(10, Math.min(28, r * 0.28));
 
-  // Data clamp
   const data = useMemo(
     () => items.map((d, i) => ({ ...d, value: Math.max(0, Math.min(100, +d.value || 0)), i })),
     [items]
   );
 
-  // D3 helpers (memoized)
-  const arc = useMemo(() => d3.arc().cornerRadius(10), []);
+  const arc = d3.arc().cornerRadius(10);
   const startAngle = -Math.PI / 2;
-  const scale = useMemo(() => d3.scaleLinear().domain([0, 100]).range([0, 2 * Math.PI]), []);
+  const scale = d3.scaleLinear().domain([0, 100]).range([0, 2 * Math.PI]);
 
   useEffect(() => {
     const svg = d3.select(svgRef.current);
     svg.attr("role", "img").attr("aria-label", title).attr("viewBox", `0 0 ${width} ${height}`);
-    svg.select("rect.bg").attr("width", width).attr("height", height).attr("fill", colors.bg);
+    svg.select("rect.bg").attr("width", width).attr("height", height).attr("fill", C.bg);
 
-    const g = svg.select("g.inner").attr("transform", `translate(${margin.left},${margin.top})`);
+    const g = svg.select("g.inner").attr("transform", `translate(${margin.left},${margin.top + 40})`);
+    
 
-    // Title & subtitle
+    // Title
     svg
       .select("text.chart-title")
       .attr("x", width / 2)
-      .attr("y", 22)
+      .attr("y", 26)
       .attr("text-anchor", "middle")
-      .style("fill", colors.ink)
+      .style("fill", C.ink)
       .style("font-weight", 700)
       .style("font-size", 18)
       .text(title);
 
+    // Subtitle
     svg
       .select("text.chart-subtitle")
       .attr("x", width / 2)
-      .attr("y", 40)
+      .attr("y", 46)
       .attr("text-anchor", "middle")
-      .style("fill", colors.muted)
+      .style("fill", C.muted)
       .style("font-weight", 600)
       .style("font-size", 12)
       .text(subtitle);
 
-    // Gradients (blue → purple → pink) per badge
+    // Gradients per badge 
     const defs = svg.select("defs.gradients");
-    defs
-      .selectAll("linearGradient.badgeGrad")
-      .data(data, (d) => d.i)
-      .join(
-        (enter) => {
-          const lg = enter
-            .append("linearGradient")
-            .attr("class", "badgeGrad")
-            .attr("gradientUnits", "userSpaceOnUse")
-            .attr("id", (d) => `badgeGrad-${d.i}`);
-          lg.append("stop").attr("offset", 0).attr("stop-color", colors.blue).attr("stop-opacity", 1);
-          lg.append("stop").attr("offset", 0.5).attr("stop-color", colors.purple).attr("stop-opacity", 1);
-          lg.append("stop").attr("offset", 1).attr("stop-color", colors.pink).attr("stop-opacity", 1);
-          return lg;
-        },
-        (update) => update,
-        (exit) => exit.remove()
+    const grads = defs.selectAll("linearGradient.badgeGrad").data(data, (d) => d.i);
+    grads
+      .join((enter) =>
+        enter
+          .append("linearGradient")
+          .attr("class", "badgeGrad")
+          .attr("gradientUnits", "userSpaceOnUse")
+          .each(function () {
+            const gsel = d3.select(this);
+            gsel
+              .selectAll("stop")
+              .data([
+                { o: 0, c: C.blue },
+                { o: 0.5, c: C.purple },
+                { o: 1, c: C.pink },
+              ])
+              .join("stop")
+              .attr("offset", (s) => s.o)
+              .attr("stop-color", (s) => s.c)
+              .attr("stop-opacity", 1);
+          })
       )
+      .attr("id", (d) => `badgeGrad-${d.i}`)
       .attr("x1", (d) => margin.left + cellW * d.i + cellW / 2 - r)
-      .attr("y1", (d) => margin.top + innerH / 2)
+      .attr("y1", margin.top + innerH / 2)
       .attr("x2", (d) => margin.left + cellW * d.i + cellW / 2 + r)
-      .attr("y2", (d) => margin.top + innerH / 2);
+      .attr("y2", margin.top + innerH / 2);
 
-    // Groups per badge
+    // Groups
     const badges = g.select("g.badges").selectAll("g.badge").data(data, (d) => d.i);
     const enter = badges.enter().append("g").attr("class", "badge");
+
     badges.merge(enter).attr("transform", (d) => `translate(${cellW * d.i + cellW / 2}, ${innerH / 2})`);
 
-    // Track (full circle)
-    const track = badges.merge(enter).selectAll("path.track").data((d) => [d]);
-    track
+    // Track
+    badges
+      .merge(enter)
+      .selectAll("path.track")
+      .data((d) => [d])
       .join("path")
       .attr("class", "track")
       .attr("fill", "none")
-      .attr("stroke", colors.track)
+      .attr("stroke", C.track)
       .attr("stroke-width", thickness)
       .attr("d", arc({ innerRadius: r - thickness, outerRadius: r, startAngle, endAngle: startAngle + scale(100) }));
 
-    // Active arc
-    const arcSel = badges.merge(enter).selectAll("path.arc").data((d) => [d]);
-    arcSel
-      .join(
-        (e) =>
-          e
-            .append("path")
-            .attr("class", "arc")
-            .attr("fill", "none")
-            .attr("stroke", (d) => `url(#badgeGrad-${d.i})`)
-            .attr("stroke-width", thickness)
-            .attr("stroke-linecap", "round")
-            .attr("d", arc({ innerRadius: r - thickness, outerRadius: r, startAngle, endAngle: startAngle }))
-            .on("mousemove", function (event, d) {
-              const [mx, my] = d3.pointer(event, svg.node());
-              setTooltip({
-                show: true,
-                x: mx + 12,
-                y: my + 12,
-                html: `<strong>${d.label}</strong><br/>${d.value}%<br/><span style='opacity:.8'>${d.detail}</span>`,
-              });
-            })
-            .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })))
-            .call((enter) =>
-              enter
-                .transition()
-                .duration(1100)
-                .ease(d3.easeCubicOut)
-                .attrTween("d", function (d) {
-                  const i = d3.interpolate(0, d.value);
-                  return (t) =>
-                    arc({
-                      innerRadius: r - thickness,
-                      outerRadius: r,
-                      startAngle,
-                      endAngle: startAngle + scale(i(t)),
-                    });
-                })
-            ),
-        (u) =>
-          u
-            .on("mousemove", function (event, d) {
-              const [mx, my] = d3.pointer(event, svg.node());
-              setTooltip({
-                show: true,
-                x: mx + 12,
-                y: my + 12,
-                html: `<strong>${d.label}</strong><br/>${d.value}%<br/><span style='opacity:.8'>${d.detail}</span>`,
-              });
-            })
-            .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })))
-            .transition()
-            .duration(700)
-            .ease(d3.easeCubicInOut)
-            .attr("d", (d) =>
-              arc({ innerRadius: r - thickness, outerRadius: r, startAngle, endAngle: startAngle + scale(d.value) })
-            ),
-        (exit) => exit.remove()
-      );
+    // Arc
+    badges
+      .merge(enter)
+      .selectAll("path.arc")
+      .data((d) => [d])
+      .join("path")
+      .attr("class", "arc")
+      .attr("fill", "none")
+      .attr("stroke", (d) => `url(#badgeGrad-${d.i})`)
+      .attr("stroke-width", thickness)
+      .attr("stroke-linecap", "round")
+      .attr("d", (d) => arc({ innerRadius: r - thickness, outerRadius: r, startAngle, endAngle: startAngle + scale(d.value) }))
+      .on("mousemove", function (event, d) {
+        const [mx, my] = d3.pointer(event, svg.node());
+        setTooltip({ show: true, x: mx + 12, y: my + 12, html: `<strong>${d.label}</strong><br/>${d.value}%<br/><span style='opacity:.8'>${d.detail}</span>` });
+      })
+      .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })));
 
-    // Center labels
-    const valText = badges.merge(enter).selectAll("text.value").data((d) => [d]);
-    valText
+    // Value text
+    badges
+      .merge(enter)
+      .selectAll("text.value")
+      .data((d) => [d])
       .join("text")
       .attr("class", "value")
       .attr("text-anchor", "middle")
       .attr("dy", "0.35em")
-      .style("fill", colors.ink)
-      .style("font-size", 24)
+      .style("fill", C.ink)
+      .style("font-size", 22)
       .style("font-weight", 800)
-      .text((d) => `${d3.format(".0f")(d.value)}%`);
+      .text((d) => `${d.value}%`);
 
-    const labText = badges.merge(enter).selectAll("text.label").data((d) => [d]);
-    labText
+    // Label text
+    badges
+      .merge(enter)
+      .selectAll("text.label")
+      .data((d) => [d])
       .join("text")
       .attr("class", "label")
       .attr("text-anchor", "middle")
       .attr("y", r + 28)
-      .style("fill", colors.ink)
+      .style("fill", C.muted)
       .style("font-size", 13)
       .style("font-weight", 600)
       .text((d) => d.label);
 
     badges.exit().remove();
-  }, [
-    data,
-    width,
-    height,
-    margin,
-    innerW,
-    innerH,
-    cellW,
-    r,
-    thickness,
-    colors,
-    title,
-    subtitle,
-    arc,
-    startAngle,
-    scale,
-  ]);
+  }, [items, data, width, height, margin, innerW, innerH, cellW, r, thickness, C, title, subtitle]);
 
   return (
-    <div style={{ position: "relative", maxWidth: width }}>
+    <div
+      style={{
+        position: "relative",
+        maxWidth: width,
+        margin: "2rem auto",
+        padding: "16px",
+        background: "#fff",
+        borderRadius: 16,
+        boxShadow: "0 12px 28px rgba(24,33,95,0.12)",
+        border: "1px solid #e9ebf5",
+      }}
+    >
       <svg ref={svgRef} width={width} height={height}>
         <rect className="bg" />
         <defs className="gradients" />
@@ -1367,19 +1263,24 @@ export function TriptychRadialBadges({
             position: "absolute",
             left: tooltip.x,
             top: tooltip.y,
-            background: "#11131a",
-            color: "#eae7ff",
-            border: "1px solid #2a2e3a",
-            borderRadius: 8,
+            background: "#fff",
+            color: "#1f2544",
+            border: "1px solid #e9ebf5",
+            borderRadius: 10,
             padding: "8px 10px",
             pointerEvents: "none",
-            boxShadow: "0 6px 18px rgba(0,0,0,0.35)",
+            boxShadow: "0 10px 22px rgba(24,33,95,0.14)",
             fontSize: 12,
             whiteSpace: "nowrap",
+            maxWidth: 220,
           }}
           dangerouslySetInnerHTML={{ __html: tooltip.html }}
         />
       )}
+
+      <style>{`
+        text { font-family: ui-sans-serif, system-ui, Inter, Segoe UI, Roboto; }
+      `}</style>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import React from "react";
 import policyImage from "../image/policy.png";
-import { BreachImpactFunnel } from "../components/D3CyberCharts";
+import { BreachImpactBars } from "../components/D3CyberCharts";
 import { SchoolReadinessGapsBars } from "../components/D3CyberCharts";
 
 function Policy() {
@@ -46,19 +46,16 @@ function Policy() {
         senior leaders worldwide fined, dismissed, or even jailed following
         breaches.
       </p>
-      <div style={{ maxWidth: 500, margin: "2rem auto" }}>
-        <BreachImpactFunnel
-          width={500}
-          height={280}
-          title="Breach Impact Funnel"
-          data={[
-            { label: "All orgs", value: 100 },
-            { label: "Breached", value: 87 },
-            { label: ">£1M loss", value: 53 },
-            { label: "Leaders penalised", value: 51 },
-          ]}
-        />
-      </div>
+      <BreachImpactBars
+        title="Breach impact snapshot"
+        subtitle="Share of organisations (%)"
+        data={[
+          { label: "All orgs (baseline)", value: 100 },
+          { label: "Breached", value: 87 },
+          { label: ">£1M loss", value: 53 },
+          { label: "Leaders penalised", value: 51 },
+        ]}
+      />
 
       <p>
         Taken together, the evidence shows that education and workforce
