@@ -1087,21 +1087,20 @@ export function TriptychRadialBadges({
     { label: "Illegal activity", value: 20, detail: "~1 in 5 aged 10–16 engage in illegal online activity" },
   ],
   width = 840,
-  height = 340,
-  margin = { top: 44, right: 24, bottom: 40, left: 24 },
+  height = 360,
+  // extra top margin to keep titles away from the chart
+  margin = { top: 64, right: 24, bottom: 40, left: 24 },
   title = "Student-driven risk snapshot",
   subtitle = "Schools & youth cyber context",
 }) {
   const svgRef = React.useRef(null);
   const [tooltip, setTooltip] = React.useState({ show: false, x: 0, y: 0, html: "" });
 
-  // theme (light)
   const C = React.useMemo(
     () => ({
       bg: "#ffffff",
       ink: "#1f2544",
       muted: "#4b4f6b",
-      grid: "#e9ebf5",
       track: "#e9ebf5",
       blue: "#5AA9FF",
       purple: "#6f7ce8",
@@ -1121,11 +1120,9 @@ export function TriptychRadialBadges({
     [items]
   );
 
-  // layout
   const r = Math.min(cellW, innerH) / 2 - 12;
   const thickness = Math.max(10, Math.min(28, r * 0.28));
 
-  // ✅ memoize radial primitives
   const startAngle = React.useMemo(() => -Math.PI / 2, []);
   const scale = React.useMemo(() => d3.scaleLinear().domain([0, 100]).range([0, 2 * Math.PI]), []);
   const arc = React.useMemo(() => d3.arc().cornerRadius(10), []);
@@ -1135,11 +1132,11 @@ export function TriptychRadialBadges({
     svg.attr("role", "img").attr("aria-label", title).attr("viewBox", `0 0 ${width} ${height}`);
     svg.select("rect.bg").attr("width", width).attr("height", height).attr("fill", C.bg);
 
-    // titles with a bit more breathing room
+    // Title & subtitle with more padding from the chart
     svg
       .select("text.chart-title")
       .attr("x", width / 2)
-      .attr("y", 26)
+      .attr("y", 28)
       .attr("text-anchor", "middle")
       .style("fill", C.ink)
       .style("font-weight", 700)
@@ -1149,7 +1146,7 @@ export function TriptychRadialBadges({
     svg
       .select("text.chart-subtitle")
       .attr("x", width / 2)
-      .attr("y", 46)
+      .attr("y", 50)
       .attr("text-anchor", "middle")
       .style("fill", C.muted)
       .style("font-weight", 600)
@@ -1158,7 +1155,7 @@ export function TriptychRadialBadges({
 
     const g = svg.select("g.inner").attr("transform", `translate(${margin.left},${margin.top})`);
 
-    // gradients per badge (blue→purple→pink)
+    // Gradients per badge (blue→purple→pink)
     const defs = svg.select("defs.gradients");
     const grads = defs.selectAll("linearGradient.badgeGrad").data(data, (d) => d.i);
     const gradEnter = grads
@@ -1192,13 +1189,13 @@ export function TriptychRadialBadges({
       });
     grads.exit().remove();
 
-    // groups per badge
+    // Groups per badge
     const badges = g.select("g.badges").selectAll("g.badge").data(data, (d) => d.i);
     const enter = badges.enter().append("g").attr("class", "badge");
 
     badges.merge(enter).attr("transform", (d) => `translate(${cellW * d.i + cellW / 2}, ${innerH / 2})`);
 
-    // track
+    // Track
     const track = badges.merge(enter).selectAll("path.track").data((d) => [d]);
     track
       .enter()
@@ -1210,7 +1207,7 @@ export function TriptychRadialBadges({
       .attr("stroke-width", thickness)
       .attr("d", arc({ innerRadius: r - thickness, outerRadius: r, startAngle, endAngle: startAngle + scale(100) }));
 
-    // active arc (no animation)
+    // Active arc (no growth animation)
     const arcSel = badges.merge(enter).selectAll("path.arc").data((d) => [d]);
     arcSel
       .enter()
@@ -1224,9 +1221,9 @@ export function TriptychRadialBadges({
       .attr("d", (d) => arc({ innerRadius: r - thickness, outerRadius: r, startAngle, endAngle: startAngle + scale(d.value) }))
       .on("mousemove", function (event, d) {
         const [mx, my] = d3.pointer(event, svg.node());
-        const tipW = 260,
-          tipH = 70,
-          pad = 10;
+        const pad = 10;
+        const tipW = 300;
+        const tipH = 100;
         const tx = Math.max(pad, Math.min(mx + 12, width - tipW - pad));
         const ty = Math.max(pad, Math.min(my + 12, height - tipH - pad));
         setTooltip({
@@ -1238,7 +1235,7 @@ export function TriptychRadialBadges({
       })
       .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })));
 
-    // center value
+    // Center value
     const valText = badges.merge(enter).selectAll("text.value").data((d) => [d]);
     valText
       .enter()
@@ -1252,7 +1249,7 @@ export function TriptychRadialBadges({
       .style("font-weight", 800)
       .text((d) => `${d3.format(".0f")(d.value)}%`);
 
-    // label below badge
+    // Label below badge
     const labText = badges.merge(enter).selectAll("text.label").data((d) => [d]);
     labText
       .enter()
@@ -1260,7 +1257,7 @@ export function TriptychRadialBadges({
       .attr("class", "label")
       .merge(labText)
       .attr("text-anchor", "middle")
-      .attr("y", r + 28)
+      .attr("y", r + 30)
       .style("fill", C.muted)
       .style("font-size", 13)
       .style("font-weight", 600)
@@ -1319,12 +1316,14 @@ export function TriptychRadialBadges({
             color: "#1f2544",
             border: "1px solid #e9ebf5",
             borderRadius: 10,
-            padding: "8px 10px",
+            padding: "10px 12px",
             pointerEvents: "none",
             boxShadow: "0 10px 22px rgba(24,33,95,0.14)",
-            fontSize: 12.5,
-            whiteSpace: "nowrap",
-            maxWidth: 260,
+            fontSize: 13,
+            lineHeight: 1.4,
+            whiteSpace: "normal",
+            wordBreak: "break-word",
+            maxWidth: 300,
           }}
           dangerouslySetInnerHTML={{ __html: tooltip.html }}
         />
@@ -1336,6 +1335,7 @@ export function TriptychRadialBadges({
     </div>
   );
 }
+
 
 // ===== PIPELINE / REACH – PackedCirclesOutcomeGauge =====
 export function PackedCirclesOutcomeGauge({
