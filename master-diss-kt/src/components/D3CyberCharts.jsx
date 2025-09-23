@@ -203,7 +203,7 @@ export function BreachImpactFunnel({
       .style("font-size", 18)
       .style("fill", "#eae7ff")
       .text(title);
-  }, [data, width, height, margin, title, desc, setTooltip]);
+  }, [data, stages, width, height, margin, title, desc]);
 
   return (
     <div style={{ position: "relative", width }}>
