@@ -4,10 +4,8 @@ import parentImage from '../image/parent.png';
 function Parents() {
   return (
     <div className="page">
-      <h2>For Parents</h2>
+      <h2>Behind Every Cyber Security Student is a Parent Who Said Yes</h2>
       <img src={parentImage} alt="Cyber Careers Hub" className="parent-image" />
-
-      <h3>Behind Every Cyber Security Student is a Parent Who Said Yes</h3>
 
       <h3>Why Parents Hold the Keys</h3>
       <p>
