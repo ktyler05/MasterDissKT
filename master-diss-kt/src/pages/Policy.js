@@ -1,6 +1,7 @@
 import React from "react";
 import policyImage from "../image/policy.png";
 import { BreachImpactFunnel } from "../components/D3CyberCharts";
+import { SchoolReadinessGapsBars } from "../components/D3CyberCharts";
 
 function Policy() {
   return (
@@ -45,15 +46,18 @@ function Policy() {
         senior leaders worldwide fined, dismissed, or even jailed following
         breaches.
       </p>
-      <BreachImpactFunnel
-        title="Breach Impact Funnel"
-        data={[
-          { label: "All orgs", value: 100 },
-          { label: "Breached", value: 87 },
-          { label: ">£1M loss", value: 53 },
-          { label: "Leaders penalised", value: 51 },
-        ]}
-      />
+      <div style={{ maxWidth: "500px", margin: "2rem auto" }}>
+        <BreachImpactFunnel
+          title="Breach Impact Funnel"
+          data={[
+            { label: "All orgs", value: 100 },
+            { label: "Breached", value: 87 },
+            { label: ">£1M loss", value: 53 },
+            { label: "Leaders penalised", value: 51 },
+          ]}
+        />
+      </div>
+
       <p>
         Taken together, the evidence shows that education and workforce
         development are not optional extras. Investment in teaching, training,
@@ -114,6 +118,9 @@ function Policy() {
         systemic support. A lack of institutional cyber resilience makes it
         harder for schools to teach pupils about resilience in practice.
       </p>
+      <div style={{ maxWidth: 900, margin: "1.5rem auto" }}>
+        <SchoolReadinessGapsBars />
+      </div>
       <p>
         Policy can help to close this gap by giving teachers confidence,
         resources, and clear pathways to draw on, ensuring cyber is not just

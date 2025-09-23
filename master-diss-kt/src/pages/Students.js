@@ -1,5 +1,9 @@
 import React from "react";
-import studentImage from '../image/student.png';
+import studentImage from "../image/student.png";
+import {
+  SchoolReadinessGapsBars,
+  SchoolReadinessStacked100,
+} from "../components/D3CyberCharts";
 
 function Students() {
   return (
@@ -65,6 +69,11 @@ function Students() {
         proper set up for backups of their data making schools themselves
         vulnerable to attacks.
       </p>
+
+      <section style={{ maxWidth: 900, margin: "2rem auto" }}>
+        <SchoolReadinessGapsBars />
+        <SchoolReadinessStacked100 />
+      </section>
       <p>
         The risks are not hypothetical. An ISO analysis of 215 school data
         breach reports (2022–2024) found that 57% of insider cyber incidents
@@ -324,14 +333,21 @@ function Students() {
         they are essential.
       </p>
       <p>
-        Taylor Watson offers a practical nudge: <em>“Build your network. With
-        thousands of applicants per role, an internal advocate helps. Look after
-        your mental health, the field moves fast and burnout is real.”</em> And Clare
-        Johnson adds: <em>“Follow professionals on social media and read widely; if
-        you’re drawn in, that’s a good sign. Do hands-on platforms (TryHackMe,
-        Immersive Labs, Hack The Box) to discover what excites you and gather
-        evidence of your strengths.”</em> Start small, keep going, ask for help. That
-        is how careers begin, and how safer technology gets built. By you.
+        Taylor Watson offers a practical nudge:{" "}
+        <em>
+          “Build your network. With thousands of applicants per role, an
+          internal advocate helps. Look after your mental health, the field
+          moves fast and burnout is real.”
+        </em>{" "}
+        And Clare Johnson adds:{" "}
+        <em>
+          “Follow professionals on social media and read widely; if you’re drawn
+          in, that’s a good sign. Do hands-on platforms (TryHackMe, Immersive
+          Labs, Hack The Box) to discover what excites you and gather evidence
+          of your strengths.”
+        </em>{" "}
+        Start small, keep going, ask for help. That is how careers begin, and
+        how safer technology gets built. By you.
       </p>
     </div>
   );
