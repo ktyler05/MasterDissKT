@@ -1,8 +1,7 @@
 import React from "react";
 import studentImage from "../image/student.png";
 import {
-  SchoolReadinessGapsBars,
-  SchoolReadinessStacked100,
+  SchoolReadinessStacked100
 } from "../components/D3CyberCharts";
 
 function Students() {
@@ -71,7 +70,6 @@ function Students() {
       </p>
 
       <section style={{ maxWidth: 900, margin: "2rem auto" }}>
-        <SchoolReadinessGapsBars />
         <SchoolReadinessStacked100 />
       </section>
       <p>

@@ -46,8 +46,10 @@ function Policy() {
         senior leaders worldwide fined, dismissed, or even jailed following
         breaches.
       </p>
-      <div style={{ maxWidth: "500px", margin: "2rem auto" }}>
+      <div style={{ maxWidth: 500, margin: "2rem auto" }}>
         <BreachImpactFunnel
+          width={500}
+          height={280}
           title="Breach Impact Funnel"
           data={[
             { label: "All orgs", value: 100 },
