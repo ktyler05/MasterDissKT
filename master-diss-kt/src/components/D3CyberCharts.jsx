@@ -3,19 +3,45 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import * as d3 from "d3";
 
 const useResizeObserver = (ref) => {
-  const [width, setWidth] = useState(null);
-  useEffect(() => {
+  const [bounds, setBounds] = React.useState();
+  React.useEffect(() => {
     if (!ref.current) return;
     const ro = new ResizeObserver((entries) => {
       for (const entry of entries) {
-        setWidth(entry.contentRect.width);
+        const cr = entry.contentRect;
+        setBounds({ width: cr.width, height: cr.height });
       }
     });
     ro.observe(ref.current);
     return () => ro.disconnect();
   }, [ref]);
-  return width;
+  return bounds;
 };
+
+const ChartFrame = ({ title, subtitle, height = 360, children }) => (
+  <section
+    className="chart-card"
+    style={{
+      position: "relative",
+      background: "var(--card, #fff)",
+      borderRadius: 16,
+      padding: 16,
+      boxShadow: "0 10px 30px rgba(24,33,95,.10)",
+      border: "1px solid rgba(111,124,232,.15)",
+      margin: "24px 0",
+    }}
+  >
+    <header style={{ marginBottom: 8 }}>
+      <h3 style={{ margin: 0, fontSize: 20 }}>{title}</h3>
+      {subtitle && (
+        <p style={{ margin: "6px 0 0", color: "#5a5f7a", fontSize: 13 }}>
+          {subtitle}
+        </p>
+      )}
+    </header>
+    <div style={{ position: "relative", height }}>{children}</div>
+  </section>
+);
 
 export function BreachImpactFunnel({
   data = [
