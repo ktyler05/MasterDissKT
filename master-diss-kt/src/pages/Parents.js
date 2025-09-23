@@ -1,5 +1,7 @@
 import React from "react";
-import parentImage from '../image/parent.png';
+import parentImage from "../image/parent.png";
+import { DumbbellParity } from "../components/D3CyberCharts";
+
 
 function Parents() {
   return (
@@ -89,6 +91,16 @@ function Parents() {
         Disabled and neurodivergent professionals are also under-represented.
         Too often, young people self-select out before they start.
       </p>
+      <div style={{ maxWidth: 720, margin: "2rem auto" }}>
+        <DumbbellParity
+          title="Representation gaps to parity (50%)"
+          subtitle="UK cyber workforce"
+          data={[
+            { label: "Women", value: 17 },
+            { label: "Ethnic minority", value: 15 },
+          ]}
+        />
+      </div>
       <p>
         Parental reassurance is a powerful counterweight to stereotypes.
         Encouraging daughters, neurodivergent learners, or children from less

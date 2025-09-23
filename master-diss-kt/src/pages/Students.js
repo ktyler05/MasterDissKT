@@ -1,8 +1,8 @@
 import React from "react";
 import studentImage from "../image/student.png";
-import {
-  SchoolReadinessStacked100
-} from "../components/D3CyberCharts";
+import { SchoolReadinessStacked100 } from "../components/D3CyberCharts";
+import { TriptychRadialBadges } from "../components/D3CyberCharts";
+import { PackedCirclesOutcomeGauge } from "../components/D3CyberCharts";
 
 function Students() {
   return (
@@ -82,6 +82,9 @@ function Students() {
         referrals to its Cyber Choices programme including children as young as
         seven.
       </p>
+      <div style={{ maxWidth: 840, margin: "2rem auto" }}>
+        <TriptychRadialBadges />
+      </div>
       <p>
         This pattern highlights two truths. First, young people are curious,
         capable, and often several steps ahead of the adults around them.
@@ -309,6 +312,39 @@ function Students() {
         how national and regional efforts can remove barriers and give students
         confidence.
       </p>
+      <div style={{ maxWidth: 920, margin: "2rem auto" }}>
+        <PackedCirclesOutcomeGauge
+          metrics={[
+            {
+              id: "cf_students",
+              label: "Students 30k+",
+              value: 30000,
+              program: "CyberFirst",
+            },
+            {
+              id: "cih_learners",
+              label: "Learners 10k+",
+              value: 10000,
+              program: "Cyber Innovation Hub",
+            },
+            {
+              id: "cf_events",
+              label: "Events 1.5k",
+              value: 1500,
+              program: "CyberFirst",
+            },
+            {
+              id: "cf_schools",
+              label: "Schools 270",
+              value: 270,
+              program: "CyberFirst",
+            },
+          ]}
+          placementPct={87}
+          width={920}
+          height={420}
+        />
+      </div>
       <p>
         For some, entry happens by accident. Taylor Watson reflected on his own
         journey:{" "}
