@@ -1,6 +1,6 @@
 import React from "react";
 import policyImage from "../image/policy.png";
-import { BreachImpactFunnel } from "../components/ArticleD3Charts";
+import { BreachImpactFunnel } from "../components/D3CyberCharts";
 
 function Policy() {
   return (
