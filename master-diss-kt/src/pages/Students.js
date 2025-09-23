@@ -312,39 +312,28 @@ function Students() {
         how national and regional efforts can remove barriers and give students
         confidence.
       </p>
-      <div style={{ maxWidth: 920, margin: "2rem auto" }}>
+      <div style={{ maxWidth: 760, margin: "1.5rem auto" }}>
         <PackedCirclesOutcomeGauge
+          width={760}
+          height={360}
           metrics={[
             {
               id: "cf_students",
-              label: "Students 30k+",
+              label: "CyberFirst students reached",
               value: 30000,
               program: "CyberFirst",
             },
             {
-              id: "cih_learners",
-              label: "Learners 10k+",
+              id: "cih_students",
+              label: "Cyber Innovation Hub students reached",
               value: 10000,
               program: "Cyber Innovation Hub",
             },
-            {
-              id: "cf_events",
-              label: "Events 1.5k",
-              value: 1500,
-              program: "CyberFirst",
-            },
-            {
-              id: "cf_schools",
-              label: "Schools 270",
-              value: 270,
-              program: "CyberFirst",
-            },
           ]}
           placementPct={87}
-          width={920}
-          height={420}
         />
       </div>
+
       <p>
         For some, entry happens by accident. Taylor Watson reflected on his own
         journey:{" "}

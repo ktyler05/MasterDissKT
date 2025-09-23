@@ -1386,10 +1386,8 @@ export function TriptychRadialBadges({
 // ===== PIPELINE / REACH – PackedCirclesOutcomeGauge =====
 export function PackedCirclesOutcomeGauge({
   metrics = [
-    { id: "cf_students", label: "Students 30k+", value: 30000, program: "CyberFirst" },
-    { id: "cih_learners", label: "Learners 10k+", value: 10000, program: "Cyber Innovation Hub" },
-    { id: "cf_events", label: "Events 1.5k", value: 1500, program: "CyberFirst" },
-    { id: "cf_schools", label: "Schools 270", value: 270, program: "CyberFirst" },
+    { id: "cf_students", label: "CyberFirst students reached", value: 30000, program: "CyberFirst" },
+    { id: "cih_students", label: "Cyber Innovation Hub students reached", value: 10000, program: "Cyber Innovation Hub" },
   ],
   placementPct = 87,
   width = 920,
@@ -1401,15 +1399,16 @@ export function PackedCirclesOutcomeGauge({
   const svgRef = useRef(null);
   const [tooltip, setTooltip] = useState({ show: false, x: 0, y: 0, html: "" });
 
+  // White/card theme to match the rest of the site
   const C = useMemo(
     () => ({
-      bg: "#0b0b12",
-      ink: "#eae7ff",
-      muted: "#9aa0b3",
-      grid: "#2a2e3a",
-      blue: "#5AA9FF",
-      purple: "#A78BFA",
-      pink: "#FF6AD5",
+      bg: "#ffffff",      // card background
+      ink: "#1f2544",     // primary text
+      muted: "#4b4f6b",   // secondary text
+      grid: "#e8eaf6",    // very light grid/frame
+      purple: "#6f7ce8",  // CyberFirst
+      blue: "#5aa9ff",    // Cyber Innovation Hub
+      accent: "#9a7be0",  // minor accent if needed
     }),
     []
   );
@@ -1418,31 +1417,29 @@ export function PackedCirclesOutcomeGauge({
   const innerH = height - margin.top - margin.bottom;
 
   // Layout split: left (bubbles) / right (gauge)
-  const gaugeColW = Math.max(240, innerW * 0.32);
-  const bubblesW = innerW - gaugeColW - 16; // 16px gutter
+  const gaugeColW = Math.max(260, innerW * 0.34);
+  const bubblesW = innerW - gaugeColW - 18; // gutter
   const bubblesH = innerH;
 
-  // Deterministic packed bubbles (no force => no jitter)
+  // Deterministic packed bubbles
   const packLeaves = useMemo(() => {
     const children = metrics.map((m, i) => ({
       id: m.id ?? `${m.label}-${i}`,
-      label: m.label,
+      label: m.label || (m.program === "CyberFirst" ? "CyberFirst students reached" : "Cyber Innovation Hub students reached"),
       value: Math.max(0, +m.value || 0),
       program: m.program ?? "",
     }));
     const root = d3.hierarchy({ children }).sum((d) => d.value);
     const pack = d3.pack().size([bubblesW, bubblesH]).padding(10);
-    return pack(root)
-      .leaves()
-      .map((leaf) => ({
-        id: leaf.data.id,
-        label: leaf.data.label,
-        value: leaf.data.value,
-        program: leaf.data.program,
-        x: leaf.x,
-        y: leaf.y,
-        r: leaf.r,
-      }));
+    return pack(root).leaves().map((leaf) => ({
+      id: leaf.data.id,
+      label: leaf.data.label,
+      value: leaf.data.value,
+      program: leaf.data.program,
+      x: leaf.x,
+      y: leaf.y,
+      r: leaf.r,
+    }));
   }, [metrics, bubblesW, bubblesH]);
 
   useEffect(() => {
@@ -1450,10 +1447,11 @@ export function PackedCirclesOutcomeGauge({
     svg.attr("role", "img").attr("aria-label", title).attr("viewBox", `0 0 ${width} ${height}`);
     svg.select("rect.bg").attr("width", width).attr("height", height).attr("fill", C.bg);
 
+    // Titles
     svg
       .select("text.chart-title")
       .attr("x", width / 2)
-      .attr("y", 22)
+      .attr("y", 24)
       .attr("text-anchor", "middle")
       .style("fill", C.ink)
       .style("font-weight", 700)
@@ -1463,7 +1461,7 @@ export function PackedCirclesOutcomeGauge({
     svg
       .select("text.chart-subtitle")
       .attr("x", width / 2)
-      .attr("y", 40)
+      .attr("y", 44)
       .attr("text-anchor", "middle")
       .style("fill", C.muted)
       .style("font-weight", 600)
@@ -1473,6 +1471,7 @@ export function PackedCirclesOutcomeGauge({
     const g = svg.select("g.inner").attr("transform", `translate(${margin.left},${margin.top})`);
     const gb = g.select("g.bubbles");
     const gg = g.select("g.gauge");
+    const gl = g.select("g.legend");
 
     // ---------- BUBBLES ----------
     const color = d3
@@ -1480,6 +1479,7 @@ export function PackedCirclesOutcomeGauge({
       .domain(["CyberFirst", "Cyber Innovation Hub", "Other"])
       .range([C.purple, C.blue, "#7C3AED"]);
 
+    // subtle frame
     gb
       .selectAll("rect.frame")
       .data([0])
@@ -1491,8 +1491,8 @@ export function PackedCirclesOutcomeGauge({
       .attr("height", bubblesH)
       .attr("fill", "none")
       .attr("stroke", C.grid)
-      .attr("stroke-dasharray", "3 6")
-      .attr("opacity", 0.3);
+      .attr("rx", 10)
+      .attr("opacity", 0.75);
 
     const cells = gb.selectAll("g.node").data(packLeaves, (d) => d.id);
     const enter = cells.enter().append("g").attr("class", "node");
@@ -1515,7 +1515,7 @@ export function PackedCirclesOutcomeGauge({
           show: true,
           x: mx + 12,
           y: my + 12,
-          html: `<strong>${d.label}</strong><br/>${d3.format(",")(d.value)}<br/><span style='opacity:.85'>Program: ${d.program || ""}</span>`,
+          html: `<strong>${d.label}</strong><br/>${d3.format(",")(d.value)}<br/><span style='opacity:.85'>${d.program}</span>`,
         });
       })
       .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })))
@@ -1535,7 +1535,7 @@ export function PackedCirclesOutcomeGauge({
       .style("font-size", 14)
       .text((d) => {
         const txt = d3.formatPrefix(".1", 1e3)(d.value).toUpperCase();
-        return d.r < 18 ? "" : txt;
+        return d.r < 18 ? "" : txt; // hide if too small
       });
 
     // labels (below)
@@ -1543,8 +1543,8 @@ export function PackedCirclesOutcomeGauge({
       .merge(enter)
       .select("text.label")
       .attr("text-anchor", "middle")
-      .attr("dy", (d) => d.r + 14)
-      .style("fill", "#b7d7ff")
+      .attr("dy", (d) => d.r + 16)
+      .style("fill", C.muted)
       .style("font-weight", 600)
       .style("font-size", 12)
       .text((d) => d.label);
@@ -1554,7 +1554,7 @@ export function PackedCirclesOutcomeGauge({
     // ---------- GAUGE ----------
     const gw = gaugeColW;
     const gh = bubblesH;
-    const gx = bubblesW + 16;
+    const gx = bubblesW + 18;
     const gy = 0;
 
     const gWrap = gg.attr("transform", `translate(${gx},${gy})`);
@@ -1580,7 +1580,7 @@ export function PackedCirclesOutcomeGauge({
       .attr("stroke-width", thickness)
       .attr("d", arc({ startAngle: start, endAngle: start + toAngle(100) }));
 
-    // active arc
+    // active arc (pink-ish accent gradient)
     gWrap
       .selectAll("path.active")
       .data([pct])
@@ -1591,8 +1591,8 @@ export function PackedCirclesOutcomeGauge({
             .attr("class", "active")
             .attr("transform", `translate(${centerXg},${centerYg})`)
             .attr("fill", "url(#gaugeGrad)")
-            .attr("stroke", C.pink)
-            .attr("stroke-width", 1.5)
+            .attr("stroke", "#ff6ad5")
+            .attr("stroke-width", 1)
             .on("mousemove", (event) => {
               const [mx, my] = d3.pointer(event, svg.node());
               setTooltip({ show: true, x: mx + 12, y: my + 12, html: `<strong>Bursary placement</strong><br/>${pct}%` });
@@ -1641,34 +1641,66 @@ export function PackedCirclesOutcomeGauge({
       .attr("x", centerXg)
       .attr("y", centerYg + radius + 22)
       .attr("text-anchor", "middle")
-      .style("fill", "#b7d7ff")
+      .style("fill", C.muted)
       .style("font-weight", 600)
       .text((d) => d);
-  }, [
-    packLeaves,
-    width,
-    height,
-    margin,
-    innerW,
-    innerH,
-    bubblesW,
-    bubblesH,
-    gaugeColW,
-    placementPct,
-    C,
-    title,
-    subtitle,
-  ]);
+
+    // ---------- LEGEND (key) ----------
+    const legendItems = [
+      { label: "CyberFirst", color: C.purple },
+      { label: "Cyber Innovation Hub", color: C.blue },
+    ];
+    const legY = 0; // top of gauge column
+    gl
+      .attr("transform", `translate(${gx},${legY})`)
+      .selectAll("g.item")
+      .data(legendItems)
+      .join((e) => {
+        const it = e.append("g").attr("class", "item");
+        it.append("circle");
+        it.append("text");
+        return it;
+      })
+      .attr("transform", (_d, i) => `translate(${gaugeColW / 2 - 110 + i * 160}, 0)`)
+      .each(function (d) {
+        const node = d3.select(this);
+        node
+          .select("circle")
+          .attr("r", 6)
+          .attr("cx", 0)
+          .attr("cy", 0)
+          .attr("fill", d.color);
+        node
+          .select("text")
+          .attr("x", 12)
+          .attr("y", 4)
+          .style("fill", C.ink)
+          .style("font-weight", 600)
+          .style("font-size", 12.5)
+          .text(d.label);
+      });
+  }, [packLeaves, width, height, margin, innerW, innerH, bubblesW, bubblesH, gaugeColW, placementPct, C, title, subtitle]);
 
   return (
-    <div style={{ position: "relative", maxWidth: width }}>
+    <div
+      style={{
+        position: "relative",
+        maxWidth: width,
+        margin: "2rem auto",
+        padding: "1rem",
+        background: "#fff",
+        borderRadius: 16,
+        boxShadow: "0 12px 28px rgba(24,33,95,0.12)",
+        border: "1px solid #e8eaf6",
+      }}
+    >
       <svg ref={svgRef} width={width} height={height}>
         <rect className="bg" />
         <defs>
-          {/* Gauge gradient (pink) */}
+          {/* Gauge gradient */}
           <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#FFB3E7" />
-            <stop offset="100%" stopColor="#FF6AD5" />
+            <stop offset="0%" stopColor="#ffb3e7" />
+            <stop offset="100%" stopColor="#ff6ad5" />
           </linearGradient>
         </defs>
         <text className="chart-title" />
@@ -1676,23 +1708,25 @@ export function PackedCirclesOutcomeGauge({
         <g className="inner" transform={`translate(${margin.left},${margin.top})`}>
           <g className="bubbles" />
           <g className="gauge" />
+          <g className="legend" />
         </g>
       </svg>
 
+      {/* Tooltip */}
       {tooltip.show && (
         <div
           style={{
             position: "absolute",
             left: tooltip.x,
             top: tooltip.y,
-            background: "#11131a",
-            color: "#eae7ff",
-            border: "1px solid #2a2e3a",
-            borderRadius: 8,
+            background: "#fff",
+            color: "#1f2544",
+            border: "1px solid #e8eaf6",
+            borderRadius: 10,
             padding: "8px 10px",
             pointerEvents: "none",
-            boxShadow: "0 6px 18px rgba(0,0,0,0.35)",
-            fontSize: 12,
+            boxShadow: "0 10px 22px rgba(24,33,95,0.14)",
+            fontSize: 12.5,
             whiteSpace: "nowrap",
           }}
           dangerouslySetInnerHTML={{ __html: tooltip.html }}
