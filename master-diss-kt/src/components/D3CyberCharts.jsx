@@ -43,8 +43,6 @@ const ChartFrame = ({ title, subtitle, height = 360, children }) => (
   </section>
 );
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import * as d3 from "d3";
 
 export function BreachImpactFunnel({
   data = [
