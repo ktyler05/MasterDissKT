@@ -1087,51 +1087,55 @@ export function TriptychRadialBadges({
     { label: "Illegal activity", value: 20, detail: "~1 in 5 aged 10–16 engage in illegal online activity" },
   ],
   width = 840,
-  height = 360,
-  margin = { top: 36, right: 24, bottom: 36, left: 24 },
+  height = 340,
+  margin = { top: 44, right: 24, bottom: 40, left: 24 },
   title = "Student-driven risk snapshot",
   subtitle = "Schools & youth cyber context",
 }) {
-  const svgRef = useRef(null);
-  const [tooltip, setTooltip] = useState({ show: false, x: 0, y: 0, html: "" });
+  const svgRef = React.useRef(null);
+  const [tooltip, setTooltip] = React.useState({ show: false, x: 0, y: 0, html: "" });
 
-  // Light theme
-  const C = {
-    bg: "#ffffff",
-    ink: "#1f2544",
-    muted: "#4b4f6b",
-    blue: "#5aa9ff",
-    purple: "#6f7ce8",
-    pink: "#ff6ad5",
-    track: "#e9ebf5",
-  };
+  // theme (light)
+  const C = React.useMemo(
+    () => ({
+      bg: "#ffffff",
+      ink: "#1f2544",
+      muted: "#4b4f6b",
+      grid: "#e9ebf5",
+      track: "#e9ebf5",
+      blue: "#5AA9FF",
+      purple: "#6f7ce8",
+      pink: "#FF6AD5",
+    }),
+    []
+  );
 
   const innerW = width - margin.left - margin.right;
   const innerH = height - margin.top - margin.bottom;
 
   const cols = items.length;
   const cellW = innerW / cols;
-  const r = Math.min(cellW, innerH) / 2 - 20; // smaller radius to create more space
-  const thickness = Math.max(10, Math.min(28, r * 0.28));
 
-  const data = useMemo(
+  const data = React.useMemo(
     () => items.map((d, i) => ({ ...d, value: Math.max(0, Math.min(100, +d.value || 0)), i })),
     [items]
   );
 
-  const arc = d3.arc().cornerRadius(10);
-  const startAngle = -Math.PI / 2;
-  const scale = d3.scaleLinear().domain([0, 100]).range([0, 2 * Math.PI]);
+  // layout
+  const r = Math.min(cellW, innerH) / 2 - 12;
+  const thickness = Math.max(10, Math.min(28, r * 0.28));
 
-  useEffect(() => {
+  // ✅ memoize radial primitives
+  const startAngle = React.useMemo(() => -Math.PI / 2, []);
+  const scale = React.useMemo(() => d3.scaleLinear().domain([0, 100]).range([0, 2 * Math.PI]), []);
+  const arc = React.useMemo(() => d3.arc().cornerRadius(10), []);
+
+  React.useEffect(() => {
     const svg = d3.select(svgRef.current);
     svg.attr("role", "img").attr("aria-label", title).attr("viewBox", `0 0 ${width} ${height}`);
     svg.select("rect.bg").attr("width", width).attr("height", height).attr("fill", C.bg);
 
-    const g = svg.select("g.inner").attr("transform", `translate(${margin.left},${margin.top + 40})`);
-    
-
-    // Title
+    // titles with a bit more breathing room
     svg
       .select("text.chart-title")
       .attr("x", width / 2)
@@ -1142,7 +1146,6 @@ export function TriptychRadialBadges({
       .style("font-size", 18)
       .text(title);
 
-    // Subtitle
     svg
       .select("text.chart-subtitle")
       .attr("x", width / 2)
@@ -1153,61 +1156,67 @@ export function TriptychRadialBadges({
       .style("font-size", 12)
       .text(subtitle);
 
-    // Gradients per badge 
+    const g = svg.select("g.inner").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // gradients per badge (blue→purple→pink)
     const defs = svg.select("defs.gradients");
     const grads = defs.selectAll("linearGradient.badgeGrad").data(data, (d) => d.i);
+    const gradEnter = grads
+      .enter()
+      .append("linearGradient")
+      .attr("class", "badgeGrad")
+      .attr("gradientUnits", "userSpaceOnUse");
+
     grads
-      .join((enter) =>
-        enter
-          .append("linearGradient")
-          .attr("class", "badgeGrad")
-          .attr("gradientUnits", "userSpaceOnUse")
-          .each(function () {
-            const gsel = d3.select(this);
-            gsel
-              .selectAll("stop")
-              .data([
-                { o: 0, c: C.blue },
-                { o: 0.5, c: C.purple },
-                { o: 1, c: C.pink },
-              ])
-              .join("stop")
-              .attr("offset", (s) => s.o)
-              .attr("stop-color", (s) => s.c)
-              .attr("stop-opacity", 1);
-          })
-      )
+      .merge(gradEnter)
       .attr("id", (d) => `badgeGrad-${d.i}`)
       .attr("x1", (d) => margin.left + cellW * d.i + cellW / 2 - r)
-      .attr("y1", margin.top + innerH / 2)
+      .attr("y1", (d) => margin.top + innerH / 2)
       .attr("x2", (d) => margin.left + cellW * d.i + cellW / 2 + r)
-      .attr("y2", margin.top + innerH / 2);
+      .attr("y2", (d) => margin.top + innerH / 2)
+      .each(function () {
+        const gsel = d3.select(this);
+        const stops = [
+          { o: 0, c: C.blue },
+          { o: 0.5, c: C.purple },
+          { o: 1, c: C.pink },
+        ];
+        let s = gsel.selectAll("stop").data(stops);
+        s.enter().append("stop");
+        gsel
+          .selectAll("stop")
+          .data(stops)
+          .attr("offset", (s) => s.o)
+          .attr("stop-color", (s) => s.c)
+          .attr("stop-opacity", 1);
+      });
+    grads.exit().remove();
 
-    // Groups
+    // groups per badge
     const badges = g.select("g.badges").selectAll("g.badge").data(data, (d) => d.i);
     const enter = badges.enter().append("g").attr("class", "badge");
 
     badges.merge(enter).attr("transform", (d) => `translate(${cellW * d.i + cellW / 2}, ${innerH / 2})`);
 
-    // Track
-    badges
-      .merge(enter)
-      .selectAll("path.track")
-      .data((d) => [d])
-      .join("path")
+    // track
+    const track = badges.merge(enter).selectAll("path.track").data((d) => [d]);
+    track
+      .enter()
+      .append("path")
       .attr("class", "track")
+      .merge(track)
       .attr("fill", "none")
       .attr("stroke", C.track)
       .attr("stroke-width", thickness)
       .attr("d", arc({ innerRadius: r - thickness, outerRadius: r, startAngle, endAngle: startAngle + scale(100) }));
 
-    // Arc
-    badges
-      .merge(enter)
-      .selectAll("path.arc")
-      .data((d) => [d])
-      .join("path")
+    // active arc (no animation)
+    const arcSel = badges.merge(enter).selectAll("path.arc").data((d) => [d]);
+    arcSel
+      .enter()
+      .append("path")
       .attr("class", "arc")
+      .merge(arcSel)
       .attr("fill", "none")
       .attr("stroke", (d) => `url(#badgeGrad-${d.i})`)
       .attr("stroke-width", thickness)
@@ -1215,31 +1224,41 @@ export function TriptychRadialBadges({
       .attr("d", (d) => arc({ innerRadius: r - thickness, outerRadius: r, startAngle, endAngle: startAngle + scale(d.value) }))
       .on("mousemove", function (event, d) {
         const [mx, my] = d3.pointer(event, svg.node());
-        setTooltip({ show: true, x: mx + 12, y: my + 12, html: `<strong>${d.label}</strong><br/>${d.value}%<br/><span style='opacity:.8'>${d.detail}</span>` });
+        const tipW = 260,
+          tipH = 70,
+          pad = 10;
+        const tx = Math.max(pad, Math.min(mx + 12, width - tipW - pad));
+        const ty = Math.max(pad, Math.min(my + 12, height - tipH - pad));
+        setTooltip({
+          show: true,
+          x: tx,
+          y: ty,
+          html: `<strong>${d.label}</strong><br/>${d.value}%<br/><span style="opacity:.8">${d.detail ?? ""}</span>`,
+        });
       })
       .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })));
 
-    // Value text
-    badges
-      .merge(enter)
-      .selectAll("text.value")
-      .data((d) => [d])
-      .join("text")
+    // center value
+    const valText = badges.merge(enter).selectAll("text.value").data((d) => [d]);
+    valText
+      .enter()
+      .append("text")
       .attr("class", "value")
+      .merge(valText)
       .attr("text-anchor", "middle")
       .attr("dy", "0.35em")
       .style("fill", C.ink)
-      .style("font-size", 22)
+      .style("font-size", 24)
       .style("font-weight", 800)
-      .text((d) => `${d.value}%`);
+      .text((d) => `${d3.format(".0f")(d.value)}%`);
 
-    // Label text
-    badges
-      .merge(enter)
-      .selectAll("text.label")
-      .data((d) => [d])
-      .join("text")
+    // label below badge
+    const labText = badges.merge(enter).selectAll("text.label").data((d) => [d]);
+    labText
+      .enter()
+      .append("text")
       .attr("class", "label")
+      .merge(labText)
       .attr("text-anchor", "middle")
       .attr("y", r + 28)
       .style("fill", C.muted)
@@ -1248,7 +1267,24 @@ export function TriptychRadialBadges({
       .text((d) => d.label);
 
     badges.exit().remove();
-  }, [items, data, width, height, margin, innerW, innerH, cellW, r, thickness, C, title, subtitle]);
+  }, [
+    items,
+    data,
+    width,
+    height,
+    margin,
+    innerW,
+    innerH,
+    cellW,
+    r,
+    thickness,
+    startAngle,
+    scale,
+    arc,
+    C,
+    title,
+    subtitle,
+  ]);
 
   return (
     <div
@@ -1256,14 +1292,14 @@ export function TriptychRadialBadges({
         position: "relative",
         maxWidth: width,
         margin: "2rem auto",
-        padding: "16px",
+        padding: 16,
         background: "#fff",
         borderRadius: 16,
         boxShadow: "0 12px 28px rgba(24,33,95,0.12)",
         border: "1px solid #e9ebf5",
       }}
     >
-      <svg ref={svgRef} width={width} height={height}>
+      <svg ref={svgRef} width={width} height={height} style={{ display: "block" }}>
         <rect className="bg" />
         <defs className="gradients" />
         <text className="chart-title" />
@@ -1286,9 +1322,9 @@ export function TriptychRadialBadges({
             padding: "8px 10px",
             pointerEvents: "none",
             boxShadow: "0 10px 22px rgba(24,33,95,0.14)",
-            fontSize: 12,
+            fontSize: 12.5,
             whiteSpace: "nowrap",
-            maxWidth: 220,
+            maxWidth: 260,
           }}
           dangerouslySetInnerHTML={{ __html: tooltip.html }}
         />
@@ -1300,6 +1336,7 @@ export function TriptychRadialBadges({
     </div>
   );
 }
+
 // ===== PIPELINE / REACH – PackedCirclesOutcomeGauge =====
 export function PackedCirclesOutcomeGauge({
   metrics = [
