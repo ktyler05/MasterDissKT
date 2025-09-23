@@ -475,3 +475,278 @@ export const SchoolReadinessStacked100 = () => {
     </ChartFrame>
   );
 };
+export function ConcentricRadialGauges({
+  basic = 44,             // basic shortfall %
+  advanced = 27,          // advanced shortfall %
+  width = 520,
+  height = 420,
+  margin = { top: 24, right: 24, bottom: 24, left: 24 },
+  title = "Skills shortfall (2024)",
+}) {
+  const svgRef = useRef(null);
+  const [tooltip, setTooltip] = useState({ show: false, x: 0, y: 0, html: "" });
+
+  const innerW = width - margin.left - margin.right;
+  const innerH = height - margin.top - margin.bottom;
+  const cx = innerW / 2;
+  const cy = innerH / 2 + 10; // nudge slightly down to balance title
+
+  // Theme tokens (kept inside component; include in deps since object identity changes)
+  const colors = {
+    bg: "#0b0b12",
+    ink: "#eae7ff",
+    muted: "#9aa0b3",
+    grid: "#2a2e3a",
+    purple: "#A78BFA",
+    pink: "#FF6AD5",
+    track: "#2a2e3a",
+    accent: "#ffd166",
+  };
+
+  // radii for rings (recompute on size change)
+  const rings = useMemo(() => {
+    const R = Math.min(innerW, innerH) / 2;
+    return {
+      outer: { r0: R - 36, r1: R - 12 }, // thickness 24
+      inner: { r0: R - 72, r1: R - 48 },
+    };
+  }, [innerW, innerH]);
+
+  // clamp values
+  const basicVal = Math.max(0, Math.min(100, +basic || 0));
+  const advVal = Math.max(0, Math.min(100, +advanced || 0));
+
+  // arc generators (safe to recreate each render)
+  const arcOuter = d3.arc().innerRadius(rings.outer.r0).outerRadius(rings.outer.r1).cornerRadius(12);
+  const arcInner = d3.arc().innerRadius(rings.inner.r0).outerRadius(rings.inner.r1).cornerRadius(12);
+
+  const startAngle = -Math.PI / 2; // 12 o'clock
+  const scale = d3.scaleLinear().domain([0, 100]).range([0, 2 * Math.PI]);
+
+  useEffect(() => {
+    const svg = d3.select(svgRef.current);
+
+    svg
+      .attr("role", "img")
+      .attr("aria-label", title)
+      .attr("viewBox", `0 0 ${width} ${height}`);
+
+    svg.select("rect.bg").attr("width", width).attr("height", height).attr("fill", colors.bg);
+
+    const g = svg.select("g.inner").attr("transform", `translate(${margin.left},${margin.top})`);
+
+    // BACK TRACKS
+    const tracks = [
+      { key: "outer", arc: arcOuter, color: colors.track },
+      { key: "inner", arc: arcInner, color: colors.track },
+    ];
+    const trackG = g.select("g.tracks");
+    const tpaths = trackG.selectAll("path.track").data(tracks, (d) => d.key);
+    tpaths
+      .join(
+        (enter) =>
+          enter
+            .append("path")
+            .attr("class", "track")
+            .attr("transform", `translate(${cx},${cy})`)
+            .attr("fill", "none")
+            .attr("stroke", (d) => d.color)
+            .attr("stroke-width", (d) =>
+              d.key === "outer" ? rings.outer.r1 - rings.outer.r0 : rings.inner.r1 - rings.inner.r0
+            )
+            .attr("d", (d) => d.arc({ startAngle, endAngle: startAngle + scale(100) })),
+        (update) =>
+          update
+            .attr("transform", `translate(${cx},${cy})`)
+            .attr("stroke-width", (d) =>
+              d.key === "outer" ? rings.outer.r1 - rings.outer.r0 : rings.inner.r1 - rings.inner.r0
+            )
+            .attr("d", (d) => d.arc({ startAngle, endAngle: startAngle + scale(100) })),
+        (exit) => exit.remove()
+      );
+
+    // ACTIVE ARCS
+    const arcsData = [
+      { key: "basic", value: basicVal, arc: arcOuter, stroke: colors.purple, fill: "url(#gradOuter)" },
+      { key: "advanced", value: advVal, arc: arcInner, stroke: colors.pink, fill: "url(#gradInner)" },
+    ];
+
+    const arcsG = g.select("g.arcs");
+    const arcs = arcsG.selectAll("path.arc").data(arcsData, (d) => d.key);
+
+    const handleTooltip = (event, d) => {
+      const [mx, my] = d3.pointer(event, svg.node());
+      setTooltip({
+        show: true,
+        x: mx + 12,
+        y: my + 12,
+        html: `<strong>${d.key === "basic" ? "Basic shortfall" : "Advanced shortfall"}</strong><br/>${d.value}%`,
+      });
+    };
+
+    arcs
+      .join(
+        (enter) =>
+          enter
+            .append("path")
+            .attr("class", "arc")
+            .attr("transform", `translate(${cx},${cy})`)
+            .attr("fill", (d) => d.fill)
+            .attr("stroke", (d) => d.stroke)
+            .attr("stroke-width", 1.5)
+            .attr("d", (d) => d.arc({ startAngle, endAngle: startAngle })) // start at 0 length
+            .on("mousemove", handleTooltip)
+            .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })))
+            .call((enter) =>
+              enter
+                .transition()
+                .duration(1100)
+                .ease(d3.easeCubicOut)
+                .attrTween("d", function (d) {
+                  const i = d3.interpolate(0, d.value);
+                  return (t) => d.arc({ startAngle, endAngle: startAngle + scale(i(t)) });
+                })
+            ),
+        (update) =>
+          update
+            .attr("transform", `translate(${cx},${cy})`)
+            .on("mousemove", handleTooltip)
+            .on("mouseleave", () => setTooltip((t) => ({ ...t, show: false })))
+            .transition()
+            .duration(700)
+            .ease(d3.easeCubicInOut)
+            .attr("d", (d) => d.arc({ startAngle, endAngle: startAngle + scale(d.value) })),
+        (exit) => exit.remove()
+      );
+
+    // TITLE
+    svg
+      .select("text.chart-title")
+      .attr("x", width / 2)
+      .attr("y", 30)
+      .attr("text-anchor", "middle")
+      .style("fill", colors.ink)
+      .style("font-weight", 700)
+      .style("font-size", 18)
+      .text(title);
+
+    // CENTER LABELS
+    const center = g.select("g.center").attr("transform", `translate(${cx},${cy})`);
+    const centerTop = center.selectAll("text.center-title").data([0]);
+    centerTop
+      .join("text")
+      .attr("class", "center-title")
+      .attr("text-anchor", "middle")
+      .attr("y", -8)
+      .style("fill", colors.muted)
+      .style("font-weight", 600)
+      .text("Shortfall");
+
+    const centerNum = center.selectAll("text.center-num").data([`${basicVal}% / ${advVal}%`]);
+    centerNum
+      .join("text")
+      .attr("class", "center-num")
+      .attr("text-anchor", "middle")
+      .attr("y", 18)
+      .style("fill", colors.ink)
+      .style("font-weight", 800)
+      .style("font-size", 22)
+      .text((d) => d);
+
+    // LEGEND
+    const legend = g.select("g.legend");
+    const items = [
+      { label: `Basic: ${basicVal}%`, color: colors.purple },
+      { label: `Advanced: ${advVal}%`, color: colors.pink },
+    ];
+    const li = legend.selectAll("g.item").data(items);
+    li
+      .join(
+        (enter) => {
+          const e = enter.append("g").attr("class", "item");
+          e.append("rect");
+          e.append("text");
+          return e;
+        },
+        (update) => update,
+        (exit) => exit.remove()
+      )
+      .attr("transform", (_d, i) => `translate(${cx - 120 + i * 140}, ${innerH - 10})`)
+      .each(function (d) {
+        const node = d3.select(this);
+        node.select("rect").attr("width", 14).attr("height", 14).attr("rx", 3).attr("fill", d.color);
+        node
+          .select("text")
+          .attr("x", 20)
+          .attr("y", 11)
+          .style("fill", colors.ink)
+          .style("font-weight", 600)
+          .text(d.label);
+      });
+  }, [
+    basicVal,
+    advVal,
+    width,
+    height,
+    margin,
+    cx,
+    cy,
+    innerW,
+    innerH,
+    rings,
+    title,
+    colors,
+    arcOuter,
+    arcInner,
+    startAngle,
+    scale,
+  ]);
+
+  return (
+    <div style={{ position: "relative", maxWidth: width }}>
+      <svg ref={svgRef} width={width} height={height}>
+        <rect className="bg" />
+        <defs>
+          {/* Outer ring gradient (purple) */}
+          <linearGradient id="gradOuter" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#d5c9ff" />
+            <stop offset="100%" stopColor="#A78BFA" />
+          </linearGradient>
+          {/* Inner ring gradient (pink) */}
+          <linearGradient id="gradInner" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="#ffb3e7" />
+            <stop offset="100%" stopColor="#FF6AD5" />
+          </linearGradient>
+        </defs>
+        <text className="chart-title" />
+        <g className="inner" transform={`translate(${margin.left},${margin.top})`}>
+          <g className="tracks" />
+          <g className="arcs" />
+          <g className="center" />
+          <g className="legend" />
+        </g>
+      </svg>
+
+      {/* Tooltip */}
+      {tooltip.show && (
+        <div
+          style={{
+            position: "absolute",
+            left: tooltip.x,
+            top: tooltip.y,
+            background: "#11131a",
+            color: "#eae7ff",
+            border: "1px solid #2a2e3a",
+            borderRadius: 8,
+            padding: "8px 10px",
+            pointerEvents: "none",
+            boxShadow: "0 6px 18px rgba(0,0,0,0.35)",
+            fontSize: 12,
+            whiteSpace: "nowrap",
+          }}
+          dangerouslySetInnerHTML={{ __html: tooltip.html }}
+        />
+      )}
+    </div>
+  );
+}
