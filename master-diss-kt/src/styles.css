@@ -554,3 +554,34 @@ h2 {
   .chart-card .chart-title { margin-top: 2px; }
   .chart-card .chart-subtitle { margin-top: 4px; }
 }
+.resource-links {
+  list-style: none;
+  padding: 0;
+  margin: 1.5rem 0;
+  display: grid;
+  gap: 1rem;
+}
+
+.resource-links li a {
+  display: block;
+  background: linear-gradient(90deg, #ff6ad5, #6f7ce8);
+  color: white;
+  text-decoration: none;
+  font-weight: 600;
+  padding: 0.75rem 1rem;
+  border-radius: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.resource-links li a:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+}
+
+.resource-links li a span {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 400;
+  opacity: 0.9;
+  margin-top: 0.25rem;
+}

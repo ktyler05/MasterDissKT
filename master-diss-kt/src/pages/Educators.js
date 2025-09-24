@@ -1,6 +1,6 @@
 import React from "react";
 import hackImage from "../image/hackathon.png";
-import teachImage from "../image/teacherdiff.png"
+import teachImage from "../image/teacherdiff.png";
 import { ConcentricRadialGauges } from "../components/D3CyberCharts";
 import ResponsiveChart from "../components/ResponsiveChart";
 
@@ -188,11 +188,7 @@ function Educators() {
       </p>
 
       <h3>Supporting Teachers to Shape the Pipeline</h3>
-      <img
-              src={teachImage}
-              alt="Cyber Careers Hub"
-              className="student-image"
-            />
+      <img src={teachImage} alt="Cyber Careers Hub" className="student-image" />
       <p>
         Teachers are the starting point of the cyber workforce pipeline. Every
         curious, confident student begins with a lesson that sparks interest. To
@@ -245,6 +241,82 @@ function Educators() {
         see themselves in cyber and see it as an accessible and interesting
         career for their future.
       </p>
+      <h3>
+        If you are looking to incorporate more Cyber in the classroom, here are
+        some interesting resources for you to look at!
+      </h3>
+      <ul className="resource-links">
+        <li>
+          <a
+            href="https://www.teachcomputing.org"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Teach Computing (NCCE)
+          </a>{" "}
+          - curriculum resources & CPD.
+        </li>
+        <li>
+          <a
+            href="https://www.computingatschool.org.uk"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Computing At School (CAS)
+          </a>{" "}
+          - teacher community & lesson ideas.
+        </li>
+        <li>
+          <a
+            href="https://www.raspberrypi.org/education"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Raspberry Pi / Code Club
+          </a>{" "}
+          - free classroom projects.
+        </li>
+        <li>
+          <a
+            href="https://www.ncsc.gov.uk/section/information-for/education"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            NCSC – Education
+          </a>{" "}
+          - lesson ideas and CyberFirst details.
+        </li>
+        <li>
+          <a
+            href="https://microbit.org/teach"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            micro:bit classroom
+          </a>{" "}
+          - hardware projects for schools.
+        </li>
+        <li>
+          <a
+            href="https://tryhackme.com/schools"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            TryHackMe for Schools
+          </a>{" "}
+          - structured tracks for classroom use.
+        </li>
+        <li>
+          <a
+            href="https://www.worldskillsuk.org"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            WorldSkills / competitions
+          </a>{" "}
+          - structured challenges & motivation for students.
+        </li>
+      </ul>
     </div>
   );
 }

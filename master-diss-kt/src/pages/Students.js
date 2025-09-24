@@ -417,7 +417,7 @@ function Students() {
         Here are some links to resources that can help you explore more cyber in
         your freetime!
       </h3>
-      <ul>
+      <ul className="resource-links">
         <li>
           <a
             href="https://tryhackme.com"
@@ -426,7 +426,7 @@ function Students() {
           >
             TryHackMe
           </a>{" "}
-          — guided, hands-on labs for beginners.
+          - guided, hands-on labs for beginners.
         </li>
         <li>
           <a
@@ -436,7 +436,7 @@ function Students() {
           >
             picoCTF
           </a>{" "}
-          — beginner CTFs aimed at school learners.
+          - beginner CTFs aimed at school learners.
         </li>
         <li>
           <a
@@ -446,7 +446,7 @@ function Students() {
           >
             Hack The Box (Academy)
           </a>{" "}
-          — practical labs & beginner tracks.
+          - practical labs & beginner tracks.
         </li>
         <li>
           <a
@@ -456,7 +456,7 @@ function Students() {
           >
             CyberFirst (NCSC)
           </a>{" "}
-          — UK summer schools, challenges and bursaries.
+          - UK summer schools, challenges and bursaries.
         </li>
         <li>
           <a
@@ -466,7 +466,7 @@ function Students() {
           >
             Immersive Labs
           </a>{" "}
-          — role-based practical exercises (some free content).
+          - role-based practical exercises (some free content).
         </li>
         <li>
           <a
@@ -484,7 +484,7 @@ function Students() {
           >
             Raspberry Pi
           </a>{" "}
-          — hardware & coding projects.
+          - hardware & coding projects.
         </li>
       </ul>
     </div>
