@@ -2,6 +2,7 @@ import React from "react";
 import policyImage from "../image/policy.png";
 import { BreachImpactBars } from "../components/D3CyberCharts";
 import { SchoolReadinessGapsBars } from "../components/D3CyberCharts";
+import ResponsiveChart from "../components/ResponsiveChart";
 
 function Policy() {
   return (
@@ -46,15 +47,21 @@ function Policy() {
         senior leaders worldwide fined, dismissed, or even jailed following
         breaches.
       </p>
-      <BreachImpactBars
-        title="Breach impact"
-        subtitle="Share of organisations affected"
-        data={[
-          { label: "Breached", value: 87 },
-          { label: ">£1M loss", value: 53 },
-          { label: "Leaders penalised", value: 51 },
-        ]}
-      />
+      <ResponsiveChart>
+        {({ width, height }) => (
+          <BreachImpactBars
+            width={width}
+            height={height}
+            title="Breach impact"
+            subtitle="Share of organisations affected"
+            data={[
+              { label: "Breached", value: 87 },
+              { label: ">£1M loss", value: 53 },
+              { label: "Leaders penalised", value: 51 },
+            ]}
+          />
+        )}
+      </ResponsiveChart>
 
       <p>
         Taken together, the evidence shows that education and workforce
@@ -116,9 +123,11 @@ function Policy() {
         systemic support. A lack of institutional cyber resilience makes it
         harder for schools to teach pupils about resilience in practice.
       </p>
-      <div style={{ maxWidth: 900, margin: "1.5rem auto" }}>
-        <SchoolReadinessGapsBars />
-      </div>
+      <ResponsiveChart>
+        {({ width, height }) => (
+          <SchoolReadinessGapsBars width={width} height={height} />
+        )}
+      </ResponsiveChart>
       <p>
         Policy can help to close this gap by giving teachers confidence,
         resources, and clear pathways to draw on, ensuring cyber is not just

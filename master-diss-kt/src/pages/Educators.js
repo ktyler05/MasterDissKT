@@ -1,6 +1,7 @@
 import React from "react";
 import policyImage from "../image/policy.png";
 import { ConcentricRadialGauges } from "../components/D3CyberCharts";
+import ResponsiveChart from "../components/ResponsiveChart";
 
 function Educators() {
   return (
@@ -46,9 +47,16 @@ function Educators() {
         downstream gap begins in schools, where not all pupils have access to
         the same level of exposure.
       </p>
-      <div style={{ maxWidth: 520, margin: "2rem auto" }}>
-        <ConcentricRadialGauges basic={44} advanced={27} />
-      </div>
+      <ResponsiveChart>
+        {({ width, height }) => (
+          <ConcentricRadialGauges
+            width={width}
+            height={height}
+            basic={44}
+            advanced={27}
+          />
+        )}
+      </ResponsiveChart>
       <p>
         Dr Yulia Cherdantseva, Reader in Cyber Security at Cardiff University,
         underlined this:{" "}

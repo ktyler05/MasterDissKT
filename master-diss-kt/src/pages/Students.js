@@ -3,6 +3,7 @@ import studentImage from "../image/student.png";
 import { SchoolReadinessStacked100 } from "../components/D3CyberCharts";
 import { TriptychRadialBadges } from "../components/D3CyberCharts";
 import { PackedCirclesOutcomeGauge } from "../components/D3CyberCharts";
+import ResponsiveChart from "../components/ResponsiveChart";
 
 function Students() {
   return (
@@ -69,9 +70,11 @@ function Students() {
         vulnerable to attacks.
       </p>
 
-      <section style={{ maxWidth: 900, margin: "2rem auto" }}>
-        <SchoolReadinessStacked100 />
-      </section>
+      <ResponsiveChart>
+        {({ width, height }) => (
+          <SchoolReadinessStacked100 width={width} height={height} />
+        )}
+      </ResponsiveChart>
       <p>
         The risks are not hypothetical. An ISO analysis of 215 school data
         breach reports (2022–2024) found that 57% of insider cyber incidents
@@ -82,9 +85,12 @@ function Students() {
         referrals to its Cyber Choices programme including children as young as
         seven.
       </p>
-      <div style={{ maxWidth: 840, margin: "2rem auto" }}>
-        <TriptychRadialBadges />
-      </div>
+
+      <ResponsiveChart>
+        {({ width, height }) => (
+          <TriptychRadialBadges width={width} height={height} />
+        )}
+      </ResponsiveChart>
       <p>
         This pattern highlights two truths. First, young people are curious,
         capable, and often several steps ahead of the adults around them.
@@ -312,37 +318,41 @@ function Students() {
         how national and regional efforts can remove barriers and give students
         confidence.
       </p>
-      <PackedCirclesOutcomeGauge
-        metrics={[
-          {
-            id: "cf_students",
-            label: "Students 30k+",
-            value: 30000,
-            program: "CyberFirst",
-          },
-          {
-            id: "cih_learners",
-            label: "Learners 10k+",
-            value: 10000,
-            program: "Cyber Innovation Hub",
-          },
-          {
-            id: "cf_events",
-            label: "Events 1.5k",
-            value: 1500,
-            program: "CyberFirst",
-          },
-          {
-            id: "cf_schools",
-            label: "Schools 270",
-            value: 270,
-            program: "CyberFirst",
-          },
-        ]}
-        placementPct={87}
-        width={920}
-        height={460}
-      />
+      <ResponsiveChart aspect={2}>
+        {({ width, height }) => (
+          <PackedCirclesOutcomeGauge
+            metrics={[
+              {
+                id: "cf_students",
+                label: "Students 30k+",
+                value: 30000,
+                program: "CyberFirst",
+              },
+              {
+                id: "cih_learners",
+                label: "Learners 10k+",
+                value: 10000,
+                program: "Cyber Innovation Hub",
+              },
+              {
+                id: "cf_events",
+                label: "Events 1.5k",
+                value: 1500,
+                program: "CyberFirst",
+              },
+              {
+                id: "cf_schools",
+                label: "Schools 270",
+                value: 270,
+                program: "CyberFirst",
+              },
+            ]}
+            placementPct={87}
+            width={width}
+            height={height}
+          />
+        )}
+      </ResponsiveChart>
 
       <p>
         For some, entry happens by accident. Taylor Watson reflected on his own
