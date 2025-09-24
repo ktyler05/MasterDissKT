@@ -432,3 +432,65 @@ h2 {
 .dropdown-content a{
   padding: 10px 16px !important; 
 }
+/*  Mobile-only fixes (charts + dropdown) bcs i keep having issues */
+@media (max-width: 640px){
+  html, body { overflow-x: hidden; }
+
+
+  .chart-card{
+    padding: 12px;
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .chart-card svg{
+    display: block;
+    width: 100% !important;
+    height: auto !important;
+  }
+  .chart-card .chart-title{
+    margin-bottom: .25rem;
+  }
+  .chart-card .chart-subtitle{
+    margin-bottom: .6rem;
+  }
+
+
+  .nav-links{
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem;
+  }
+  .navbar .nav-links a,
+  .navbar .dropbtn{
+    padding: .5rem .6rem;
+    margin-left: .25rem;
+  }
+
+  
+  .dropdown{ position: static; }
+  .dropdown-content{
+    position: fixed;
+    top: calc(56px + env(safe-area-inset-top, 0px));
+    left: 8px;
+    right: 8px;
+    width: auto;
+    max-height: 60vh;
+    overflow: auto;
+    margin-top: 0;
+    padding: 6px 0;
+    box-shadow: 0 10px 26px rgba(24,33,95,.18);
+    z-index: 1000;
+    text-align: center;
+  }
+  .dropdown-content a{
+    display: block;
+    padding: 12px 14px !important;
+    margin: 0;
+    border-radius: 8px;
+  }
+
+  .page{
+    margin: 2rem auto 1.25rem;
+    padding: clamp(1rem, 3.5vw, 1.25rem);
+  }
+}
