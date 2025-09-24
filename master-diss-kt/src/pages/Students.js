@@ -1,7 +1,7 @@
 import React from "react";
 import hackerImage from "../image/hacker.png";
-import groupImage from "../image/groupwork.png"
-import pathImage from "../image/pathwaydiagram.png"
+import groupImage from "../image/groupwork.png";
+import pathImage from "../image/pathwaydiagram.png";
 import { SchoolReadinessStacked100 } from "../components/D3CyberCharts";
 import { TriptychRadialBadges } from "../components/D3CyberCharts";
 import { PackedCirclesOutcomeGauge } from "../components/D3CyberCharts";
@@ -121,11 +121,7 @@ function Students() {
         he found more students gained the confidence to develop skills in cyber
         in a safe and legal environment.
       </p>
-      <img
-        src={groupImage}
-        alt="Cyber Careers Hub"
-        className="student-image"
-      />
+      <img src={groupImage} alt="Cyber Careers Hub" className="student-image" />
       <p>
         The lesson is clear: when schools provide structured opportunities to
         make mistakes, recover, and learn exciting skills in a legal way,
@@ -290,11 +286,7 @@ function Students() {
       </p>
 
       <h3>Pathways that actually work: GCSE to first role</h3>
-      <img
-        src={pathImage}
-        alt="Cyber Careers Hub"
-        className="student-image"
-      />
+      <img src={pathImage} alt="Cyber Careers Hub" className="student-image" />
       <p>
         There is no single doorway into cyber. Students can find a route that
         matches their learning style, interests, and confidence level, whether
@@ -420,6 +412,81 @@ function Students() {
         Start small, keep going, ask for help. That is how careers begin, and
         how safer technology gets built. By you.
       </p>
+
+      <h3>
+        Here are some links to resources that can help you explore more cyber in
+        your freetime!
+      </h3>
+      <ul>
+        <li>
+          <a
+            href="https://tryhackme.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            TryHackMe
+          </a>{" "}
+          — guided, hands-on labs for beginners.
+        </li>
+        <li>
+          <a
+            href="https://picoctf.org"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            picoCTF
+          </a>{" "}
+          — beginner CTFs aimed at school learners.
+        </li>
+        <li>
+          <a
+            href="https://www.hackthebox.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Hack The Box (Academy)
+          </a>{" "}
+          — practical labs & beginner tracks.
+        </li>
+        <li>
+          <a
+            href="https://www.ncsc.gov.uk/cyberfirst"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            CyberFirst (NCSC)
+          </a>{" "}
+          — UK summer schools, challenges and bursaries.
+        </li>
+        <li>
+          <a
+            href="https://www.immersivelabs.com"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Immersive Labs
+          </a>{" "}
+          — role-based practical exercises (some free content).
+        </li>
+        <li>
+          <a
+            href="https://microbit.org"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            micro:bit
+          </a>{" "}
+          /{" "}
+          <a
+            href="https://www.raspberrypi.org/learn"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Raspberry Pi
+          </a>{" "}
+          — hardware & coding projects.
+        </li>
+      </ul>
     </div>
   );
 }
