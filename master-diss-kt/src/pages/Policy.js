@@ -1,6 +1,6 @@
 import React from "react";
 import policyImage from "../image/policy.png";
-import setImage from "../setbacks.png"
+import setImage from "../image/setbacks.png"
 import { BreachImpactBars } from "../components/D3CyberCharts";
 import { SchoolReadinessGapsBars } from "../components/D3CyberCharts";
 import ResponsiveChart from "../components/ResponsiveChart";
