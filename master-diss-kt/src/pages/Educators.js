@@ -1,5 +1,6 @@
 import React from "react";
-import policyImage from "../image/policy.png";
+import hackImage from "../image/hackathon.png";
+import teachImage from "../image/teacherdiff.png"
 import { ConcentricRadialGauges } from "../components/D3CyberCharts";
 import ResponsiveChart from "../components/ResponsiveChart";
 
@@ -7,7 +8,7 @@ function Educators() {
   return (
     <div className="page">
       <h2>Teaching Cyber: Closing the skills gap from the classroom</h2>
-      <img src={policyImage} alt="Cyber Careers Hub" className="policy-image" />
+      <img src={hackImage} alt="Cyber Careers Hub" className="policy-image" />
 
       <h3>The Classroom Challenge</h3>
       <p>
@@ -186,6 +187,11 @@ function Educators() {
       </p>
 
       <h3>Supporting Teachers to Shape the Pipeline</h3>
+      <img
+              src={teachImage}
+              alt="Cyber Careers Hub"
+              className="student-image"
+            />
       <p>
         Teachers are the starting point of the cyber workforce pipeline. Every
         curious, confident student begins with a lesson that sparks interest. To

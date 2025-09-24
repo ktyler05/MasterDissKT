@@ -1,5 +1,6 @@
 import React from "react";
 import policyImage from "../image/policy.png";
+import setImage from "../setbacks.png"
 import { BreachImpactBars } from "../components/D3CyberCharts";
 import { SchoolReadinessGapsBars } from "../components/D3CyberCharts";
 import ResponsiveChart from "../components/ResponsiveChart";
@@ -104,6 +105,11 @@ function Policy() {
       </p>
 
       <h4>Where the Gaps Remain</h4>
+      <img
+              src={setImage}
+              alt="Cyber Careers Hub"
+              className="student-image"
+            />
       <p>
         Despite these frameworks, delivery remains uneven. Schools in
         well-supported regions with strong links to industry often thrive, while

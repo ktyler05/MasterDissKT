@@ -1,5 +1,7 @@
 import React from "react";
 import hackerImage from "../image/hacker.png";
+import groupImage from "../image/groupwork.png"
+import pathImage from "../image/pathwaydiagram.png"
 import { SchoolReadinessStacked100 } from "../components/D3CyberCharts";
 import { TriptychRadialBadges } from "../components/D3CyberCharts";
 import { PackedCirclesOutcomeGauge } from "../components/D3CyberCharts";
@@ -118,6 +120,11 @@ function Students() {
         he found more students gained the confidence to develop skills in cyber
         in a safe and legal environment.
       </p>
+      <img
+        src={groupImage}
+        alt="Cyber Careers Hub"
+        className="student-image"
+      />
       <p>
         The lesson is clear: when schools provide structured opportunities to
         make mistakes, recover, and learn exciting skills in a legal way,
@@ -282,6 +289,11 @@ function Students() {
       </p>
 
       <h3>Pathways that actually work: GCSE to first role</h3>
+      <img
+        src={pathImage}
+        alt="Cyber Careers Hub"
+        className="student-image"
+      />
       <p>
         There is no single doorway into cyber. Students can find a route that
         matches their learning style, interests, and confidence level, whether
