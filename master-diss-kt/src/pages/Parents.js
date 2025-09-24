@@ -91,20 +91,23 @@ function Parents() {
         Disabled and neurodivergent professionals are also under-represented.
         Too often, young people self-select out before they start.
       </p>
-      <ResponsiveChart>
-        {({ width, height }) => (
-          <DumbbellParity
-            width={width}
-            height={height}
-            title="Representation gaps to parity (50%)"
-            subtitle="UK cyber workforce"
-            data={[
-              { label: "Women", value: 17 },
-              { label: "Ethnic minority", value: 15 },
-            ]}
-          />
-        )}
-      </ResponsiveChart>
+      <div className="chart-tight">
+        <ResponsiveChart aspect={2.6} maxHeight={300}>
+          {({ width, height }) => (
+            <DumbbellParity
+              width={width}
+              height={height}
+              title="Representation gaps to parity (50%)"
+              subtitle="UK cyber workforce"
+              data={[
+                { label: "Women", value: 17 },
+                { label: "Ethnic minority", value: 15 },
+              ]}
+            />
+          )}
+        </ResponsiveChart>
+      </div>
+
       <p>
         Parental reassurance is a powerful counterweight to stereotypes.
         Encouraging daughters, neurodivergent learners, or children from less

@@ -47,16 +47,19 @@ function Educators() {
         downstream gap begins in schools, where not all pupils have access to
         the same level of exposure.
       </p>
-      <ResponsiveChart>
-        {({ width, height }) => (
-          <ConcentricRadialGauges
-            width={width}
-            height={height}
-            basic={44}
-            advanced={27}
-          />
-        )}
-      </ResponsiveChart>
+      <div className="chart-tight">
+        <ResponsiveChart aspect={2.2} maxHeight={300}>
+          {({ width, height }) => (
+            <ConcentricRadialGauges
+              width={width}
+              height={height}
+              basic={44}
+              advanced={27}
+            />
+          )}
+        </ResponsiveChart>
+      </div>
+
       <p>
         Dr Yulia Cherdantseva, Reader in Cyber Security at Cardiff University,
         underlined this:{" "}

@@ -1,50 +1,55 @@
-// src/components/Navbar.jsx
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 export default function Navbar() {
   const [articlesOpen, setArticlesOpen] = React.useState(false);
+  const loc = useLocation();
+  const dropRef = React.useRef(null);
 
-  const closeMenus = () => {
+  React.useEffect(() => {
     setArticlesOpen(false);
-  };
+  }, [loc.pathname]);
+
+  React.useEffect(() => {
+    function handleClickOutside(e) {
+      if (!articlesOpen) return;
+      if (dropRef.current && !dropRef.current.contains(e.target)) {
+        setArticlesOpen(false);
+      }
+    }
+    document.addEventListener("pointerdown", handleClickOutside, { passive: true });
+    return () => document.removeEventListener("pointerdown", handleClickOutside);
+  }, [articlesOpen]);
 
   return (
     <nav className="navbar">
       <h1 className="brand">Cyber Career Paths</h1>
 
       <div className="nav-links">
-        <Link to="/" onClick={closeMenus}>
-          Home
-        </Link>
+        <Link to="/">Home</Link>
 
-        <div
-          className="dropdown"
-          onMouseLeave={() => setArticlesOpen(false)}
-        >
+        <div className="dropdown" ref={dropRef}>
           <button
             className="dropbtn"
-            style={{ fontFamily: "inherit", fontWeight: 700 }}
             onClick={() => setArticlesOpen((s) => !s)}
+            aria-expanded={articlesOpen}
+            aria-haspopup="true"
           >
             Articles ▾
           </button>
+
           {articlesOpen && (
-            <div className="dropdown-content" onClick={closeMenus}>
-              <Link to="/students">Students</Link>
-              <Link to="/parents">Parents</Link>
-              <Link to="/educators">Educators</Link>
-              <Link to="/policy">Policy</Link>
+            <div className="dropdown-content" role="menu">
+              <Link to="/students" role="menuitem">Students</Link>
+              <Link to="/parents" role="menuitem">Parents</Link>
+              <Link to="/educators" role="menuitem">Educators</Link>
+              <Link to="/policy" role="menuitem">Policy</Link>
             </div>
           )}
         </div>
 
-        <Link to="/about" onClick={closeMenus}>
-          About
-        </Link>
-        <Link to="/thanks" onClick={closeMenus}>
-          Thanks
-        </Link>
+        <Link to="/about">About</Link>
+        <Link to="/thanks">Thanks</Link>
       </div>
     </nav>
   );

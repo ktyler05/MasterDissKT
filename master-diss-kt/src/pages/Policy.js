@@ -47,21 +47,23 @@ function Policy() {
         senior leaders worldwide fined, dismissed, or even jailed following
         breaches.
       </p>
-      <ResponsiveChart>
-        {({ width, height }) => (
-          <BreachImpactBars
-            width={width}
-            height={height}
-            title="Breach impact"
-            subtitle="Share of organisations affected"
-            data={[
-              { label: "Breached", value: 87 },
-              { label: ">£1M loss", value: 53 },
-              { label: "Leaders penalised", value: 51 },
-            ]}
-          />
-        )}
-      </ResponsiveChart>
+      <div className="chart-tight">
+        <ResponsiveChart aspect={2.4} maxHeight={300}>
+          {({ width, height }) => (
+            <BreachImpactBars
+              width={width}
+              height={height}
+              title="Breach impact"
+              subtitle="Share of organisations affected"
+              data={[
+                { label: "Breached", value: 87 },
+                { label: ">£1M loss", value: 53 },
+                { label: "Leaders penalised", value: 51 },
+              ]}
+            />
+          )}
+        </ResponsiveChart>
+      </div>
 
       <p>
         Taken together, the evidence shows that education and workforce
