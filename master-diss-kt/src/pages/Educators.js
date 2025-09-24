@@ -8,6 +8,7 @@ function Educators() {
   return (
     <div className="page">
       <h2>Teaching Cyber: Closing the skills gap from the classroom</h2>
+      <p className="byline">By Kendra Tyler</p>
       <img src={hackImage} alt="Cyber Careers Hub" className="policy-image" />
 
       <h3>The Classroom Challenge</h3>

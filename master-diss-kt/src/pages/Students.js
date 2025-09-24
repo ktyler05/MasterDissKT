@@ -14,6 +14,7 @@ function Students() {
       <h2>
         Not Just Hackers: How to Build a Cyber Career from School to First Job
       </h2>
+      <p className="byline">By Kendra Tyler</p>
       <img
         src={hackerImage}
         alt="Cyber Careers Hub"

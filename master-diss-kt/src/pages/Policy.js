@@ -9,6 +9,7 @@ function Policy() {
   return (
     <div className="page">
       <h2>Policy, Pipeline, and the Future of Cyber Talent</h2>
+      <p className="byline">By Kendra Tyler</p>
       <img src={policyImage} alt="Cyber Careers Hub" className="policy-image" />
 
       <h3>Why Policy Matters</h3>

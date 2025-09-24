@@ -8,6 +8,7 @@ function Parents() {
   return (
     <div className="page">
       <h2>Behind Every Cyber Security Student is a Parent Who Said Yes</h2>
+      <p className="byline">By Kendra Tyler</p>
       <img src={parentImage} alt="Cyber Careers Hub" className="parent-image" />
 
       <h3>Why Parents Hold the Keys</h3>

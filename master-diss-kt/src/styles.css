@@ -541,3 +541,11 @@ h2 {
     max-width: 480px !important;
   }
 }
+.byline {
+  font-size: 0.9rem;
+  font-style: italic;
+  color: #666;
+  text-align: right;
+  margin-top: -0.25rem;
+  margin-bottom: 1.5rem;
+}
