@@ -509,32 +509,35 @@ h2 {
   -webkit-overflow-scrolling: touch;
 }
 
+/* Desktop-only image caps (mobile stays the same) */
 @media (min-width: 900px){
-  .home-image{
+  .page img.home-image{
     width: 100%;
-    max-width: clamp(420px, 64vw, 820px);
+    max-width: 760px !important;
+    height: auto;
+    display: block;
+    margin-inline: auto;
   }
-  .student-image,
-  .parent-image,
-  .policy-image{
+
+  .page img.student-image,
+  .page img.parent-image,
+  .page img.policy-image{
     width: 100%;
-    max-width: clamp(360px, 46vw, 620px);
+    max-width: 500px !important;  /* tighten here if still big (e.g. 460px) */
+    height: auto;
+    display: block;
+    margin: 1.25rem auto;
   }
 }
 
-
+/* Extra large screens: nudge a bit smaller */
 @media (min-width: 1300px){
-  .home-image{
-    max-width: 780px;
+  .page img.home-image{
+    max-width: 720px !important;
   }
-  .student-image,
-  .parent-image,
-  .policy-image{
-    max-width: 580px;
+  .page img.student-image,
+  .page img.parent-image,
+  .page img.policy-image{
+    max-width: 480px !important;
   }
-}
-
-
-.narrow-img{
-  max-width: 520px !important;
 }
