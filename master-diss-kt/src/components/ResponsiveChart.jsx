@@ -1,30 +1,41 @@
 import React from "react";
 
-function useResize(elRef) {
+export default function ResponsiveChart({
+  aspect = 1.8,         
+  minHeight = 220,
+  maxHeight = 560,
+  className = "chart-card",
+  children,
+}) {
+  const containerRef = React.useRef(null);
   const [size, setSize] = React.useState({ width: 0, height: 0 });
-  React.useLayoutEffect(() => {
-    const el = elRef.current;
+
+  const recompute = React.useCallback(() => {
+    const el = containerRef.current;
     if (!el) return;
-    const ro = new ResizeObserver(([entry]) => {
-      const w = entry.contentRect.width;
-      const isMobile = w < 560;
-      const aspect = isMobile ? 4 / 3 : 16 / 9; 
-      const h = Math.max(240, Math.round(w / aspect));
-      setSize({ width: Math.round(w), height: h });
-    });
+    const width = el.clientWidth || 0;
+    const height = Math.max(
+      minHeight,
+      Math.min(maxHeight, Math.round(width / aspect || minHeight))
+    );
+    setSize({ width, height });
+  }, [aspect, minHeight, maxHeight]);
+
+  React.useLayoutEffect(() => {
+    recompute();
+  }, [recompute]);
+
+  React.useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver(recompute);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
-  return size;
-}
-
-export default function ResponsiveChart({ children, className = "chart-card" }) {
-  const ref = React.useRef(null);
-  const { width, height } = useResize(ref);
+  }, [recompute]);
 
   return (
-    <div ref={ref} className={className} style={{ width: "100%" }}>
-      {width > 0 && height > 0 ? children({ width, height }) : null}
+    <div ref={containerRef} className={className} style={{ width: "100%" }}>
+      {size.width > 0 && children(size)}
     </div>
   );
 }
