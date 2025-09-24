@@ -1,6 +1,6 @@
 import React from "react";
 import parentImage from "../image/parent.png";
-import crossImage from "../oppcrossroad.png"
+import crossImage from "../image/oppcrossroad.png"
 import { DumbbellParity } from "../components/D3CyberCharts";
 import ResponsiveChart from "../components/ResponsiveChart";
 
