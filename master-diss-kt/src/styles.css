@@ -549,3 +549,8 @@ h2 {
   margin-top: -0.25rem;
   margin-bottom: 1.5rem;
 }
+@media (max-width: 480px){
+  .chart-card { padding: 10px 8px; }
+  .chart-card .chart-title { margin-top: 2px; }
+  .chart-card .chart-subtitle { margin-top: 4px; }
+}
