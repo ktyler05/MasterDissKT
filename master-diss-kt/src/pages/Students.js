@@ -1,5 +1,5 @@
 import React from "react";
-import studentImage from "../image/student.png";
+import hackerImage from "../image/hacker.png";
 import { SchoolReadinessStacked100 } from "../components/D3CyberCharts";
 import { TriptychRadialBadges } from "../components/D3CyberCharts";
 import { PackedCirclesOutcomeGauge } from "../components/D3CyberCharts";
@@ -13,7 +13,7 @@ function Students() {
         Not Just Hackers: How to Build a Cyber Career from School to First Job
       </h2>
       <img
-        src={studentImage}
+        src={hackerImage}
         alt="Cyber Careers Hub"
         className="student-image"
       />
