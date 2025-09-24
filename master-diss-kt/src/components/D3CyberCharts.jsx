@@ -566,7 +566,7 @@ export const SchoolReadinessStacked100 = () => {
   return (
     <ChartFrame
       title="School cyber readiness vs gap"
-      subtitle="100% per control: share of schools Ready vs Gap"
+      subtitle="100% per control: share of schools that have these cyber security precautions Ready vs the Gap that don't"
       height={320}
     >
       <div

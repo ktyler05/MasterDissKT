@@ -7,7 +7,7 @@ function Home() {
   return (
     <div className="page">
       <h2>
-        Welcome to the <span className="gradient-text">Skills and Gender gap in Cyber</span>
+        Closing the Cyber Gap: <span className="gradient-text">Skills, Access, and Diversity</span>
       </h2>
 
       <p className="lead">
