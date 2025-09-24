@@ -141,16 +141,16 @@ function Parents() {
       </p>
 
       <h3>Mapping the Routes Without the Jargon</h3>
-      <img
-              src={crossImage}
-              alt="Cyber Careers Hub"
-              className="student-image"
-            />
       <p>
         There is no single right route into cyber. Think of parallel options
         that suit different learners and budgets. Here is a way to understand
         each level, plus how you can help at each stage.
       </p>
+      <img
+              src={crossImage}
+              alt="Cyber Careers Hub"
+              className="student-image"
+            />
       <h4>GCSE and A level route</h4>
       <ul>
         <li>

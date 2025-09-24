@@ -509,3 +509,32 @@ h2 {
   -webkit-overflow-scrolling: touch;
 }
 
+@media (min-width: 900px){
+  .home-image{
+    width: 100%;
+    max-width: clamp(420px, 64vw, 820px);
+  }
+  .student-image,
+  .parent-image,
+  .policy-image{
+    width: 100%;
+    max-width: clamp(360px, 46vw, 620px);
+  }
+}
+
+
+@media (min-width: 1300px){
+  .home-image{
+    max-width: 780px;
+  }
+  .student-image,
+  .parent-image,
+  .policy-image{
+    max-width: 580px;
+  }
+}
+
+
+.narrow-img{
+  max-width: 520px !important;
+}
