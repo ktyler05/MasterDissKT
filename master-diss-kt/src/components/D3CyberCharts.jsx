@@ -390,22 +390,53 @@ export const SchoolReadinessStacked100 = () => {
   useEffect(() => {
     if (!bounds) return;
     const { width, height } = bounds;
-    const margin = { top: 26, right: 22, bottom: 56, left: 180 };
-    const innerW = Math.max(280, width - margin.left - margin.right);
+
+    const small = width <= 420;
+    const tiny = width <= 340;
+
+    const tickFS = tiny ? 10 : small ? 11 : 12;
+    const labFS  = tiny ? 11 : small ? 12 : 13;
+    const legFS  = tiny ? 11 : 12;
+
+    // dynamic left margin based on label length (keeps bars inside on phones)
+    const approxCharW = 6.5 * (labFS / 12);
+    const longestLabelPx =
+      d3.max(raw, (d) => d.item.length) * approxCharW + 8;
+
+    const leftBase = Math.max(80, Math.min(180, Math.round(longestLabelPx)));
+    const margin = {
+      top: small ? 58 : 62,
+      right: small ? 10 : 18,
+      bottom: small ? 42 : 48,
+      left: leftBase,
+    };
+
+    const innerW = Math.max(220, width - margin.left - margin.right);
     const innerH = Math.max(160, height - margin.top - margin.bottom);
 
     const svg = d3
       .select(svgRef.current)
       .attr("viewBox", `0 0 ${width} ${height}`)
+      .attr("preserveAspectRatio", "xMidYMid meet")
       .attr("role", "img")
       .attr("aria-label", "School cyber readiness vs gap (100% stacked bars)");
 
     svg.selectAll("*").remove();
+
+    // background (kept white to match card)
+    svg
+      .append("rect")
+      .attr("width", width)
+      .attr("height", height)
+      .attr("fill", "transparent");
+
     const g = svg
       .append("g")
+      .attr("class", "inner")
       .attr("transform", `translate(${margin.left},${margin.top})`);
 
     const keys = ["Ready", "Gap"];
+    const color = d3.scaleOrdinal().domain(keys).range(["#6f7ce8", "#b18cf0"]);
 
     const y = d3
       .scaleBand()
@@ -415,23 +446,48 @@ export const SchoolReadinessStacked100 = () => {
 
     const x = d3.scaleLinear().domain([0, 100]).range([0, innerW]);
 
-    const color = d3.scaleOrdinal().domain(keys).range(["#6f7ce8", "#b18cf0"]);
-
-    // stack (already in percentages)
     const stack = d3.stack().keys(keys);
     const series = stack(raw);
 
     // axes
+    const xAxis = d3
+      .axisBottom(x)
+      .ticks(small ? 4 : 5)
+      .tickFormat((t) => `${t}%`)
+      .tickPadding(6);
+
     g.append("g")
+      .attr("class", "x-axis")
       .attr("transform", `translate(0,${innerH})`)
-      .call(
-        d3
-          .axisBottom(x)
-          .ticks(5)
-          .tickFormat((t) => `${t}%`)
-          .tickPadding(8)
-      );
-    g.append("g").call(d3.axisLeft(y).tickSize(0).tickPadding(10));
+      .call(xAxis)
+      .call((sel) => {
+        sel.selectAll("path, line").attr("stroke", "#e9ebf5");
+        sel.selectAll("text").style("font-size", `${tickFS}px`).attr("fill", "#4b4f6b");
+      });
+
+    const yAxis = d3.axisLeft(y).tickSize(0).tickPadding(8);
+
+    g.append("g")
+      .attr("class", "y-axis")
+      .call(yAxis)
+      .call((sel) => {
+        sel.selectAll("text")
+          .style("font-size", `${labFS}px`)
+          .attr("fill", "#1f2544");
+        sel.select(".domain").remove();
+      });
+
+    // gridlines (optional but helps readability)
+    g.append("g")
+      .attr("class", "grid-x")
+      .selectAll("line")
+      .data(x.ticks(small ? 4 : 5))
+      .join("line")
+      .attr("x1", (d) => x(d))
+      .attr("x2", (d) => x(d))
+      .attr("y1", 0)
+      .attr("y2", innerH)
+      .attr("stroke", "#f1f3fb");
 
     // bars
     const groups = g
@@ -439,6 +495,7 @@ export const SchoolReadinessStacked100 = () => {
       .data(series)
       .enter()
       .append("g")
+      .attr("class", "layer")
       .attr("fill", (s) => color(s.key));
 
     groups
@@ -452,43 +509,57 @@ export const SchoolReadinessStacked100 = () => {
       .attr("width", (seg) => x(seg[1]) - x(seg[0]))
       .attr("rx", 6)
       .on("mousemove", (event, seg) => {
-        const key = d3.select(event.target.parentNode).datum().key; // Ready or Gap
+        const key = d3.select(event.target.parentNode).datum().key;
         const value = seg.data[key];
+
+        const wrap = wrapperRef.current.getBoundingClientRect();
+        const pad = 10;
+        const tipW = 220;
+        const tipH = 80;
+
+        const mouseX = event.clientX - wrap.left;
+        const mouseY = event.clientY - wrap.top;
+
+        const tx = Math.max(pad, Math.min(mouseX + 12, wrap.width - tipW - pad));
+        const ty = Math.max(pad, Math.min(mouseY + 12, wrap.height - tipH - pad));
+
         d3
           .select(tooltipRef.current)
-          .style("left", `${event.offsetX + margin.left + 10}px`)
-          .style("top", `${event.offsetY + margin.top - 10}px`)
-          .style("opacity", 1).html(`
+          .style("left", `${tx}px`)
+          .style("top", `${ty}px`)
+          .style("opacity", 1)
+          .html(`
             <div class="tt-title">${seg.data.item}</div>
             <div class="tt-sub">${key}</div>
             <div class="tt-value">${value}%</div>
           `);
       })
-      .on("mouseleave", () =>
-        d3.select(tooltipRef.current).style("opacity", 0)
-      );
+      .on("mouseleave", () => d3.select(tooltipRef.current).style("opacity", 0));
 
-    // legend (above, spaced)
-    const legend = g.append("g").attr("transform", `translate(0, -16)`);
-    const leg = legend
+    // legend (top-left inside plot, compact on phones)
+    const legend = g.append("g").attr("class", "legend");
+    const legItems = legend
       .selectAll("g.leg")
       .data(keys)
       .enter()
       .append("g")
       .attr("class", "leg")
-      .attr("transform", (_d, i) => `translate(${i * 140}, -4)`);
+      .attr("transform", (_d, i) => `translate(${i * (small ? 110 : 140)}, ${- (small ? 18 : 20)})`);
 
-    leg
+    legItems
       .append("rect")
       .attr("width", 12)
       .attr("height", 12)
       .attr("rx", 3)
       .attr("fill", (d) => color(d));
-    leg
+
+    legItems
       .append("text")
       .attr("x", 16)
       .attr("y", 10)
-      .style("fontSize", 12)
+      .style("font-size", `${legFS}px`)
+      .style("font-weight", 600)
+      .attr("fill", "#1f2544")
       .text((d) => d);
   }, [bounds, raw]);
 
@@ -500,9 +571,9 @@ export const SchoolReadinessStacked100 = () => {
     >
       <div
         ref={wrapperRef}
-        style={{ position: "relative", width: "100%", height: "100%" }}
+        style={{ position: "relative", width: "100%", height: "100%", overflow: "hidden" }}
       >
-        <svg ref={svgRef} style={{ width: "100%", height: "100%" }} />
+        <svg ref={svgRef} style={{ width: "100%", height: "100%", display: "block" }} />
         <div ref={tooltipRef} className="d3-tooltip" />
       </div>
     </ChartFrame>
