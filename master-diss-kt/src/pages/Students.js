@@ -476,7 +476,7 @@ function Students() {
           >
             micro:bit
           </a>{" "}
-          /{" "}
+          {" "}
           <a
             href="https://www.raspberrypi.org/learn"
             target="_blank"

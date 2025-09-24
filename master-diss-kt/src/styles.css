@@ -585,3 +585,15 @@ h2 {
   opacity: 0.9;
   margin-top: 0.25rem;
 }
+.contact-link {
+  color: #ff6ad5;
+  font-weight: 600;
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s ease-in-out;
+}
+
+.contact-link:hover {
+  color: #6f7ce8;
+  border-bottom: 2px solid #6f7ce8;
+}

@@ -48,7 +48,7 @@ export default function Navbar() {
           )}
         </div>
 
-        <Link to="/about">About</Link>
+        <Link to="/contact">Contact-me</Link>
         <Link to="/thanks">Thanks</Link>
       </div>
     </nav>
