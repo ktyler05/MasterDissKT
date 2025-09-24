@@ -85,6 +85,16 @@ function Students() {
           </ResponsiveChart>
         </ErrorBoundary>
       </div>
+      <div className="chart-sources">
+        Sources:{" "}
+        <a
+          href="https://swgfl.org.uk/research/cyber-security-in-uk-schools/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          SWGfL Cyber Security in UK Schools (2022)
+        </a>
+      </div>
 
       <p>
         The risks are not hypothetical. An ISO analysis of 215 school data
@@ -105,6 +115,17 @@ function Students() {
             )}
           </ResponsiveChart>
         </ErrorBoundary>
+      </div>
+      <div className="chart-sources">
+        Sources:{" "}
+        <a
+          href="https://ico.org.uk/about-the-ico/media-centre/news-and-blogs/2025/09/insider-threat-of-students-leading-to-increasing-number-of-cyber-attacks-in-schools/#:~:text=Over%20half%20of%20school%20insider,for%2097%25%20of%20these%20attacks."
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          ICO Insider threat of students leading to increasing number of cyber
+          attacks in schools (2025)
+        </a>
       </div>
 
       <p>
@@ -380,6 +401,24 @@ function Students() {
             )}
           </ResponsiveChart>
         </ErrorBoundary>
+      </div>
+      <div className="chart-sources">
+        Sources:{" "}
+        <a
+          href="https://www.ncsc.gov.uk/cyberfirst/overview"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          NCSC CyberFirst
+        </a>{" "}
+        |{" "}
+        <a
+          href="https://cyberinnovationhub.wales/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Cyber Innovation Hub
+        </a>
       </div>
 
       <p>

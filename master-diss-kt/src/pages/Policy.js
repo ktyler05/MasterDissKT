@@ -69,6 +69,16 @@ function Policy() {
           )}
         </ResponsiveChart>
       </div>
+      <div className="chart-sources">
+        Sources:{" "}
+        <a
+          href="https://www.fortinet.com/content/dam/fortinet/assets/reports/2024-cybersecurity-skills-gap-report.pdf"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Fortinet Cybersecurity Skills Gap (2024)
+        </a>
+      </div>
 
       <p>
         Taken together, the evidence shows that education and workforce
@@ -139,6 +149,16 @@ function Policy() {
           <SchoolReadinessGapsBars width={width} height={height} />
         )}
       </ResponsiveChart>
+      <div className="chart-sources">
+        Sources:{" "}
+        <a
+          href="https://swgfl.org.uk/research/cyber-security-in-uk-schools/"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          SWGfL Cyber Security in UK Schools (2022)
+        </a>
+      </div>
       <p>
         Policy can help to close this gap by giving teachers confidence,
         resources, and clear pathways to draw on, ensuring cyber is not just

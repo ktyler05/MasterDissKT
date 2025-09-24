@@ -112,6 +112,16 @@ function Parents() {
           )}
         </ResponsiveChart>
       </div>
+      <div className="chart-sources">
+        Sources:{" "}
+        <a
+          href="https://www.gov.uk/government/publications/cyber-security-skills-in-the-uk-labour-market-2024"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          DSIT Cyber Security skills in the UK labour market (2024)
+        </a>
+      </div>
 
       <p>
         Parental reassurance is a powerful counterweight to stereotypes.
