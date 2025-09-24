@@ -4,6 +4,7 @@ import { SchoolReadinessStacked100 } from "../components/D3CyberCharts";
 import { TriptychRadialBadges } from "../components/D3CyberCharts";
 import { PackedCirclesOutcomeGauge } from "../components/D3CyberCharts";
 import ResponsiveChart from "../components/ResponsiveChart";
+import ErrorBoundary from "../components/ErrorBoundary";
 
 function Students() {
   return (
@@ -71,11 +72,13 @@ function Students() {
       </p>
 
       <div className="chart-medium">
-        <ResponsiveChart aspect={2.0} maxHeight={340}>
-          {({ width, height }) => (
-            <SchoolReadinessStacked100 width={width} height={height} />
-          )}
-        </ResponsiveChart>
+        <ErrorBoundary>
+          <ResponsiveChart aspect={2.0} maxHeight={340}>
+            {({ width, height }) => (
+              <SchoolReadinessStacked100 width={width} height={height} />
+            )}
+          </ResponsiveChart>
+        </ErrorBoundary>
       </div>
 
       <p>
@@ -90,11 +93,13 @@ function Students() {
       </p>
 
       <div className="chart-medium">
-        <ResponsiveChart aspect={2.2} maxHeight={340}>
-          {({ width, height }) => (
-            <TriptychRadialBadges width={width} height={height} />
-          )}
-        </ResponsiveChart>
+        <ErrorBoundary>
+          <ResponsiveChart aspect={2.2} maxHeight={340}>
+            {({ width, height }) => (
+              <TriptychRadialBadges width={width} height={height} />
+            )}
+          </ResponsiveChart>
+        </ErrorBoundary>
       </div>
 
       <p>
@@ -325,41 +330,43 @@ function Students() {
         confidence.
       </p>
       <div className="chart-medium">
-        <ResponsiveChart aspect={2.2} maxHeight={380}>
-          {({ width, height }) => (
-            <PackedCirclesOutcomeGauge
-              width={width}
-              height={height}
-              metrics={[
-                {
-                  id: "cf_students",
-                  label: "Students 30k+",
-                  value: 30000,
-                  program: "CyberFirst",
-                },
-                {
-                  id: "cih_learners",
-                  label: "Learners 10k+",
-                  value: 10000,
-                  program: "Cyber Innovation Hub",
-                },
-                {
-                  id: "cf_events",
-                  label: "Events 1.5k",
-                  value: 1500,
-                  program: "CyberFirst",
-                },
-                {
-                  id: "cf_schools",
-                  label: "Schools 270",
-                  value: 270,
-                  program: "CyberFirst",
-                },
-              ]}
-              placementPct={87}
-            />
-          )}
-        </ResponsiveChart>
+        <ErrorBoundary>
+          <ResponsiveChart aspect={2.2} maxHeight={380}>
+            {({ width, height }) => (
+              <PackedCirclesOutcomeGauge
+                width={width}
+                height={height}
+                metrics={[
+                  {
+                    id: "cf_students",
+                    label: "Students 30k+",
+                    value: 30000,
+                    program: "CyberFirst",
+                  },
+                  {
+                    id: "cih_learners",
+                    label: "Learners 10k+",
+                    value: 10000,
+                    program: "Cyber Innovation Hub",
+                  },
+                  {
+                    id: "cf_events",
+                    label: "Events 1.5k",
+                    value: 1500,
+                    program: "CyberFirst",
+                  },
+                  {
+                    id: "cf_schools",
+                    label: "Schools 270",
+                    value: 270,
+                    program: "CyberFirst",
+                  },
+                ]}
+                placementPct={87}
+              />
+            )}
+          </ResponsiveChart>
+        </ErrorBoundary>
       </div>
 
       <p>

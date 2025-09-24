@@ -497,3 +497,15 @@ h2 {
 .chart-narrow{ max-width: 760px; margin: 1.25rem auto; }
 .chart-medium{ max-width: 880px; margin: 1.25rem auto; }
 .chart-tight  { max-width: 640px; margin: 1.25rem auto; }
+
+
+.chart-medium, .chart-card {
+  min-width: 280px;
+}
+
+
+.chart-card {
+  overflow: auto;        
+  -webkit-overflow-scrolling: touch;
+}
+
