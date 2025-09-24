@@ -1,6 +1,6 @@
 import React from "react";
 import parentImage from "../image/parent.png";
-import crossImage from "../image/oppcrossroad.png"
+import crossImage from "../image/oppcrossroad.png";
 import { DumbbellParity } from "../components/D3CyberCharts";
 import ResponsiveChart from "../components/ResponsiveChart";
 
@@ -10,6 +10,9 @@ function Parents() {
       <h2>Behind Every Cyber Security Student is a Parent Who Said Yes</h2>
       <p className="byline">By Kendra Tyler</p>
       <img src={parentImage} alt="Cyber Careers Hub" className="parent-image" />
+      <figcaption className="image-caption">
+        This image was created with the use of generative AI using GPT-5.
+      </figcaption>
 
       <h3>Why Parents Hold the Keys</h3>
       <p>
@@ -147,11 +150,10 @@ function Parents() {
         that suit different learners and budgets. Here is a way to understand
         each level, plus how you can help at each stage.
       </p>
-      <img
-              src={crossImage}
-              alt="Cyber Careers Hub"
-              className="student-image"
-            />
+      <img src={crossImage} alt="Cyber Careers Hub" className="student-image" />
+      <figcaption className="image-caption">
+        This image was created with the use of generative AI using GPT-5.
+      </figcaption>
       <h4>GCSE and A level route</h4>
       <ul>
         <li>

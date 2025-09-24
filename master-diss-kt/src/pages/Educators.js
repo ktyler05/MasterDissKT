@@ -10,6 +10,9 @@ function Educators() {
       <h2>Teaching Cyber: Closing the skills gap from the classroom</h2>
       <p className="byline">By Kendra Tyler</p>
       <img src={hackImage} alt="Cyber Careers Hub" className="policy-image" />
+      <figcaption className="image-caption">
+        This image was created with the use of generative AI using GPT-5.
+      </figcaption>
 
       <h3>The Classroom Challenge</h3>
       <p>
@@ -189,6 +192,9 @@ function Educators() {
 
       <h3>Supporting Teachers to Shape the Pipeline</h3>
       <img src={teachImage} alt="Cyber Careers Hub" className="student-image" />
+      <figcaption className="image-caption">
+        This image was created with the use of generative AI using GPT-5.
+      </figcaption>
       <p>
         Teachers are the starting point of the cyber workforce pipeline. Every
         curious, confident student begins with a lesson that sparks interest. To

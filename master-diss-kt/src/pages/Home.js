@@ -2,12 +2,12 @@ import React from "react";
 import { Link } from "react-router-dom";
 import homeImage from "../image/home.png";
 
-
 function Home() {
   return (
     <div className="page">
       <h2>
-        Closing the Cyber Gap: <span className="gradient-text">Skills, Access, and Diversity</span>
+        Closing the Cyber Gap:{" "}
+        <span className="gradient-text">Skills, Access, and Diversity</span>
       </h2>
 
       <p className="lead">
@@ -47,9 +47,9 @@ function Home() {
       </div>
 
       <img src={homeImage} alt="Cyber Careers Hub" className="home-image" />
-
-    
-
+      <figcaption className="image-caption">
+        This image was created with the use of generative AI using GPT-5.
+      </figcaption>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import React from "react";
 import policyImage from "../image/policy.png";
-import setImage from "../image/setbacks.png"
+import setImage from "../image/setbacks.png";
 import { BreachImpactBars } from "../components/D3CyberCharts";
 import { SchoolReadinessGapsBars } from "../components/D3CyberCharts";
 import ResponsiveChart from "../components/ResponsiveChart";
@@ -11,6 +11,9 @@ function Policy() {
       <h2>Policy, Pipeline, and the Future of Cyber Talent</h2>
       <p className="byline">By Kendra Tyler</p>
       <img src={policyImage} alt="Cyber Careers Hub" className="policy-image" />
+      <figcaption className="image-caption">
+        This image was created with the use of generative AI using GPT-5.
+      </figcaption>
 
       <h3>Why Policy Matters</h3>
       <p>
@@ -106,11 +109,10 @@ function Policy() {
       </p>
 
       <h4>Where the Gaps Remain</h4>
-      <img
-              src={setImage}
-              alt="Cyber Careers Hub"
-              className="student-image"
-            />
+      <img src={setImage} alt="Cyber Careers Hub" className="student-image" />
+      <figcaption className="image-caption">
+        This image was created with the use of generative AI using GPT-5.
+      </figcaption>
       <p>
         Despite these frameworks, delivery remains uneven. Schools in
         well-supported regions with strong links to industry often thrive, while

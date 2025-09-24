@@ -597,16 +597,16 @@ h2 {
   color: #6f7ce8;
   border-bottom: 2px solid #6f7ce8;
 }
-.student-image::after,
-.policy-image::after,
-.parent-image::after,
-.home-image::after {
-  content: "This image was created with the use of generative AI using GPT-5.";
-  display: block;
+
+.image-wrapper {
+  margin: 1rem 0;
+  text-align: center; 
+}
+
+.image-caption {
   font-size: 0.8rem;
   color: #666;
-  font-style: italic;
-  text-align: center;
   margin-top: 0.4rem;
+  font-style: italic;
   opacity: 0.85;
 }

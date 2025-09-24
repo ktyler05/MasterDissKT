@@ -20,7 +20,9 @@ function Students() {
         alt="Cyber Careers Hub"
         className="student-image"
       />
-
+      <figcaption className="image-caption">
+        This image was created with the use of generative AI using GPT-5.
+      </figcaption>
       <p>
         The stereotype of the “hacker in a hoodie” typing green code into the
         night has done real damage. It makes cyber security feel mysterious,
@@ -122,6 +124,9 @@ function Students() {
         in a safe and legal environment.
       </p>
       <img src={groupImage} alt="Cyber Careers Hub" className="student-image" />
+      <figcaption className="image-caption">
+        This image was created with the use of generative AI using GPT-5.
+      </figcaption>
       <p>
         The lesson is clear: when schools provide structured opportunities to
         make mistakes, recover, and learn exciting skills in a legal way,
@@ -287,6 +292,9 @@ function Students() {
 
       <h3>Pathways that actually work: GCSE to first role</h3>
       <img src={pathImage} alt="Cyber Careers Hub" className="student-image" />
+      <figcaption className="image-caption">
+        This image was created with the use of generative AI using GPT-5.
+      </figcaption>
       <p>
         There is no single doorway into cyber. Students can find a route that
         matches their learning style, interests, and confidence level, whether
@@ -476,7 +484,6 @@ function Students() {
           >
             micro:bit
           </a>{" "}
-          {" "}
           <a
             href="https://www.raspberrypi.org/learn"
             target="_blank"
