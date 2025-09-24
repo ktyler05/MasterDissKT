@@ -1150,7 +1150,7 @@ export function DumbbellParity({
 export function TriptychRadialBadges({
   items = [
     { label: "Insider incidents", value: 57, detail: "57% of insider incidents caused by students (schools)" },
-    { label: "Stolen creds", value: 97, detail: "97% of stolen-credential incidents traced to pupils" },
+    { label: "Stolen credentials", value: 97, detail: "97% of stolen-credential incidents traced to pupils" },
     { label: "Illegal activity", value: 20, detail: "~1 in 5 aged 10–16 engage in illegal online activity" },
   ],
   width = 840,
